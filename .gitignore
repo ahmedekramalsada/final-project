@@ -1,0 +1,4 @@
+/.DS_Store
+final-project-nti/terraform/.terraform
+final-project-nti/terraform/.terraform.lock.hcl
+final-project-nti/terraform/terraform.tfstate
