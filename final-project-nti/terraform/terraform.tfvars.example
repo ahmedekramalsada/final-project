@@ -1,0 +1,47 @@
+#------------------------------------------------------------------------------
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and update values as needed
+#------------------------------------------------------------------------------
+
+# General Configuration
+aws_region  = "us-east-1"
+environment = "production"
+project     = "devops-infrastructure"
+
+# Additional tags (optional)
+# additional_tags = {
+#   Team      = "platform"
+#   CostCenter = "engineering"
+# }
+
+# VPC Configuration
+vpc_name           = "devops-vpc"
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+private_subnets    = ["10.0.1.0/24", "10.0.2.0/24"]
+public_subnets     = ["10.0.101.0/24", "10.0.102.0/24"]
+enable_nat_gateway = true
+single_nat_gateway = true
+
+# EKS Configuration
+cluster_name                    = "devops-cluster"
+cluster_version                 = "1.30"
+cluster_endpoint_public_access  = true
+cluster_endpoint_private_access = true
+node_instance_types             = ["t3.medium"]
+node_min_size                   = 2
+node_max_size                   = 3
+node_desired_size               = 2
+
+# API Gateway Configuration
+api_gateway_name               = "devops-gateway"
+api_gateway_log_retention_days = 30
+
+# Tooling Configuration
+enable_nginx_ingress = true
+nginx_chart_version  = "4.9.0"
+enable_argocd        = true
+argocd_chart_version = "5.53.0"
+
+# MongoDB URI (update with your actual connection string)
+# mongodb_uri = "mongodb+srv://user:pass@cluster.mongodb.net/dbname"
