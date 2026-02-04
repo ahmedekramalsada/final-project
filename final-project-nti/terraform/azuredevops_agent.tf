@@ -69,7 +69,7 @@ resource "kubernetes_manifest" "azuredevops_scaled_job" {
       triggers = [{
         type = "azure-pipelines"
         metadata = {
-          # FIXED: Use poolName instead of poolID for easier setup
+          organizationURL            = var.azuredevops_org_url
           poolName                   = var.azuredevops_pool_name
           targetPipelinesQueueLength = "1"
         }

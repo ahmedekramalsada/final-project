@@ -27,7 +27,7 @@ resource "aws_apigatewayv2_integration" "eks_ingress" {
 
   # Note: The URI should be the external DNS name of the NGINX Ingress LoadBalancer.
   # Since this varies, a variable or a manual update after deployment is recommended.
-  integration_uri = "http://REPLACE_WITH_INGRESS_LB_DNS"
+  integration_uri = "http://pending.ingress.lb.external"
 
   connection_type = "INTERNET"
 }
