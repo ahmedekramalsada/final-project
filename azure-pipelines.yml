@@ -22,6 +22,7 @@ stages:
       - job: TestAgent
         displayName: Verify Ephemeral Agent
         pool:
+          name : "self-hosted-k8s"
           vmImage: "ubuntu-latest"
         steps:
           - script: |
@@ -38,6 +39,7 @@ stages:
       - job: BuildAndPush
         displayName: "Build and Push to ECR"
         pool:
+          name : "self-hosted-k8s"
           vmImage: "ubuntu-latest"
         steps:
           - script: |
