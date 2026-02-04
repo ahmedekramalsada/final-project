@@ -22,7 +22,7 @@ stages:
       - job: TestAgent
         displayName: Verify Ephemeral Agent
         pool:
-          name: self-hosted-k8s # Ensure this matches your ADO Agent Pool name
+          vmImage: "ubuntu-latest"
         steps:
           - script: |
               echo "Hello from the EKS Cluster!"
@@ -35,10 +35,10 @@ stages:
     displayName: Build and Push to ECR
     dependsOn: TestConnection
     jobs:
-      - job: Build
-        displayName: Build Docker Image
+      - job: BuildAndPush
+        displayName: "Build and Push to ECR"
         pool:
-          name: self-hosted-k8s
+          vmImage: "ubuntu-latest"
         steps:
           - script: |
               echo "Logging into AWS ECR..."
