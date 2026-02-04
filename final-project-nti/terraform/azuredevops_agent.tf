@@ -1,11 +1,8 @@
-
 resource "kubernetes_namespace" "azuredevops_agents" {
-  metadata {
-    name = "azuredevops-agents"
-  }
+  metadata { name = "azuredevops-agents" }
 }
 
-# Data source to read the Azure DevOps PAT (must be created manually in SSM)
+# 1. Fetch the PAT from SSM (Ensure you created this manually in AWS first)
 data "aws_ssm_parameter" "azuredevops_pat" {
   name            = "/${var.project}/azuredevops-pat"
   with_decryption = true
@@ -16,11 +13,9 @@ resource "kubernetes_secret" "azuredevops_pat" {
     name      = "azuredevops-pat"
     namespace = kubernetes_namespace.azuredevops_agents.metadata[0].name
   }
-
   data = {
     personalAccessToken = data.aws_ssm_parameter.azuredevops_pat.value
   }
-
   type = "Opaque"
 }
 
@@ -33,19 +28,16 @@ resource "kubernetes_manifest" "azuredevops_trigger_auth" {
       namespace = kubernetes_namespace.azuredevops_agents.metadata[0].name
     }
     spec = {
-      secretTargetRef = [
-        {
-          parameter = "personalAccessToken"
-          name      = "azuredevops-pat"
-          key       = "personalAccessToken"
-        }
-      ]
+      secretTargetRef = [{
+        parameter = "personalAccessToken"
+        name      = "azuredevops-pat"
+        key       = "personalAccessToken"
+      }]
     }
   }
-
-  depends_on = [helm_release.keda]
 }
 
+# 2. ScaledJob Configuration
 resource "kubernetes_manifest" "azuredevops_scaled_job" {
   manifest = {
     apiVersion = "keda.sh/v1alpha1"
@@ -58,70 +50,31 @@ resource "kubernetes_manifest" "azuredevops_scaled_job" {
       jobTargetRef = {
         template = {
           spec = {
-            containers = [
-              {
-                name  = "azuredevops-agent"
-                image = "mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
-                env = [
-                  {
-                    name  = "AZP_URL"
-                    value = var.azuredevops_org_url
-                  },
-                  {
-                    name = "AZP_TOKEN"
-                    valueFrom = {
-                      secretKeyRef = {
-                        name = "azuredevops-pat"
-                        key  = "personalAccessToken"
-                      }
-                    }
-                  },
-                  {
-                    name  = "AZP_POOL"
-                    value = var.azuredevops_pool_name
-                  },
-                  {
-                    name = "AZP_AGENT_NAME"
-                    valueFrom = {
-                      fieldRef = {
-                        fieldPath = "metadata.name"
-                      }
-                    }
-                  }
-                ]
-              }
-            ]
+            containers = [{
+              name  = "azuredevops-agent"
+              # FIXED: Updated to 22.04 to fix the Version Error
+              image = "mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-22.04"
+              env = [
+                { name = "AZP_URL", value = var.azuredevops_org_url },
+                { name = "AZP_POOL", value = var.azuredevops_pool_name },
+                { name = "AZP_TOKEN", valueFrom = { secretKeyRef = { name = "azuredevops-pat", key = "personalAccessToken" } } }
+              ]
+            }]
             restartPolicy = "Never"
           }
         }
       }
-      pollingInterval            = 30
-      successfulJobsHistoryLimit = 5
-      failedJobsHistoryLimit     = 5
-      maxReplicaCount            = 10
-      scalingStrategy = {
-        strategy = "default"
-      }
-      triggers = [
-        {
-          type = "azure-pipelines"
-          metadata = {
-            organizationURL            = var.azuredevops_org_url
-            poolID                     = "11"
-            targetPipelinesQueueLength = "1"
-          }
-          authenticationRef = {
-            name = "azuredevops-trigger-auth"
-          }
+      pollingInterval = 30
+      maxReplicaCount = 10
+      triggers = [{
+        type = "azure-pipelines"
+        metadata = {
+          # FIXED: Use poolName instead of poolID for easier setup
+          poolName = var.azuredevops_pool_name
+          targetPipelinesQueueLength = "1"
         }
-      ]
+        authenticationRef = { name = "azuredevops-trigger-auth" }
+      }]
     }
   }
-
-  depends_on = [helm_release.keda, kubernetes_manifest.azuredevops_trigger_auth]
-
-  field_manager {
-    force_conflicts = true
-  }
-
 }
