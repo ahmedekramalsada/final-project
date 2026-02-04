@@ -107,6 +107,15 @@ kubectl get nodes
 
 ## Usage Guides
 
+### Docker Image Build & Push
+The project includes an ECR repository and an Azure Pipeline configuration to automate the image lifecycle.
+
+1.  **ECR Repository**: Created via Terraform (`ecr.tf`). The URL is available in Terraform outputs.
+2.  **Azure Pipeline**: `azure-pipelines.yml` is configured to:
+    -   Login to AWS ECR using the self-hosted agent's credentials.
+    -   Build the Docker image from `final-project-nti/app`.
+    -   Push the image with tags `latest` and the Build ID.
+
 ### Ephemeral Azure DevOps Agents
 The agents are configured as a **KEDA ScaledJob** in the `azuredevops-agents` namespace.
 
