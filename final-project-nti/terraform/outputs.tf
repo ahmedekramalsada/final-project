@@ -75,6 +75,11 @@ output "argocd_namespace" {
   value       = var.enable_argocd ? helm_release.argocd[0].namespace : null
 }
 
+output "ssm_datadog_api_key_name" {
+  description = "SSM Parameter name for Datadog API Key - update this in AWS Console"
+  value       = aws_ssm_parameter.datadog_api_key.name
+}
+
 #------------------------------------------------------------------------------
 # Kubectl Configuration
 #------------------------------------------------------------------------------

@@ -191,6 +191,13 @@ variable "argocd_chart_version" {
 variable "mongodb_uri" {
   description = "MongoDB connection URI (stored in SSM Parameter Store)"
   type        = string
-  default     = "mongodb+srv://user:pass@cluster.mongodb.net/dbname"
+  default     = "placeholder"
+  sensitive   = true
+}
+
+variable "datadog_api_key" {
+  description = "Datadog API key for monitoring (stored in SSM Parameter Store)"
+  type        = string
+  default     = "placeholder"
   sensitive   = true
 }

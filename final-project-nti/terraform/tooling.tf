@@ -48,5 +48,31 @@ resource "aws_ssm_parameter" "mongo_uri" {
   type        = "SecureString"
   value       = var.mongodb_uri
 
+  lifecycle {
+    ignore_changes = [value] # Prevents Terraform from overwriting manual updates
+  }
+
   tags = local.common_tags
+}
+
+# Datadog API Key stored securely in AWS SSM Parameter Store
+resource "aws_ssm_parameter" "datadog_api_key" {
+  name        = "/${var.project}/datadog-api-key"
+  description = "Datadog API key for monitoring"
+  type        = "SecureString"
+  value       = var.datadog_api_key
+
+  lifecycle {
+    ignore_changes = [value] # Prevents Terraform from overwriting manual updates
+  }
+
+  tags = local.common_tags
+}
+
+# Data source to read the Datadog API key (after manual update)
+data "aws_ssm_parameter" "datadog_api_key" {
+  name            = aws_ssm_parameter.datadog_api_key.name
+  with_decryption = true
+
+  depends_on = [aws_ssm_parameter.datadog_api_key]
 }
