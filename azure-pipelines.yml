@@ -3,27 +3,57 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- main
+  - main
 
 resources:
-- repo: self
+  - repo: self
 
 variables:
-  tag: '$(Build.BuildId)'
+  tag: "$(Build.BuildId)"
+  aws_region: "us-east-1"
+  # You will need to replace these with the actual values from Terraform Output after first apply
+  ecr_registry: "REPLACE_WITH_YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com"
+  ecr_repository_uri: "REPLACE_WITH_YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/final-project-app"
 
 stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: Docker@2
-      displayName: Build an image
-      inputs:
-        command: build
-        dockerfile: '$(Build.SourcesDirectory)/final-project-nti/app/Dockerfile'
-        tags: |
-          $(tag)
+  - stage: TestConnection
+    displayName: Test Cluster Connection
+    jobs:
+      - job: TestAgent
+        displayName: Verify Ephemeral Agent
+        pool:
+          name: self-hosted-k8s # Ensure this matches your ADO Agent Pool name
+        steps:
+          - script: |
+              echo "Hello from the EKS Cluster!"
+              echo "Hostname: $(hostname)"
+              echo "User: $(whoami)"
+              kubectl get nodes || echo "kubectl not authorized/installed on agent"
+            displayName: "Run Verification Script"
+
+  - stage: BuildAndPush
+    displayName: Build and Push to ECR
+    dependsOn: TestConnection
+    jobs:
+      - job: Build
+        displayName: Build Docker Image
+        pool:
+          name: self-hosted-k8s
+        steps:
+          - script: |
+              echo "Logging into AWS ECR..."
+              aws ecr get-login-password --region $(aws_region) | docker login --username AWS --password-stdin $(ecr_registry)
+            displayName: "Login to ECR"
+
+          - script: |
+              echo "Building Docker Image..."
+              cd final-project-nti/app
+              docker build -t $(ecr_repository_uri):$(tag) .
+              docker tag $(ecr_repository_uri):$(tag) $(ecr_repository_uri):latest
+            displayName: "Build Image"
+
+          - script: |
+              echo "Pushing Docker Image to ECR..."
+              docker push $(ecr_repository_uri):$(tag)
+              docker push $(ecr_repository_uri):latest
+            displayName: "Push Image"
