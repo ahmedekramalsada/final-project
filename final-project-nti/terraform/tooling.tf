@@ -41,38 +41,26 @@ resource "helm_release" "argocd" {
   depends_on = [module.eks]
 }
 
-# MongoDB URI stored securely in AWS SSM Parameter Store
-resource "aws_ssm_parameter" "mongo_uri" {
-  name        = "/${var.project}/mongodb-uri"
-  description = "MongoDB connection URI for the application"
-  type        = "SecureString"
-  value       = var.mongodb_uri
-
-  lifecycle {
-    ignore_changes = [value] # Prevents Terraform from overwriting manual updates
-  }
-
-  tags = local.common_tags
-}
-
-# Datadog API Key stored securely in AWS SSM Parameter Store
-resource "aws_ssm_parameter" "datadog_api_key" {
-  name        = "/${var.project}/datadog-api-key"
-  description = "Datadog API key for monitoring"
-  type        = "SecureString"
-  value       = var.datadog_api_key
-
-  lifecycle {
-    ignore_changes = [value] # Prevents Terraform from overwriting manual updates
-  }
-
-  tags = local.common_tags
-}
-
-# Data source to read the Datadog API key (after manual update)
-data "aws_ssm_parameter" "datadog_api_key" {
-  name            = aws_ssm_parameter.datadog_api_key.name
+# MongoDB URI (Externally Managed in SSM)
+data "aws_ssm_parameter" "mongo_uri" {
+  name            = "/${var.project}/mongodb-uri"
   with_decryption = true
+}
 
-  depends_on = [aws_ssm_parameter.datadog_api_key]
+# Datadog API Key (Externally Managed in SSM)
+data "aws_ssm_parameter" "datadog_api_key" {
+  name            = "/${var.project}/datadog-api-key"
+  with_decryption = true
+}
+
+# KEDA for Event-Driven Autoscaling (Required for ADO Agents)
+resource "helm_release" "keda" {
+  name             = "keda"
+  repository       = "https://kedacore.github.io/charts"
+  chart            = "keda"
+  namespace        = "keda"
+  create_namespace = true
+  version          = "2.13.0"
+
+  depends_on = [module.eks]
 }

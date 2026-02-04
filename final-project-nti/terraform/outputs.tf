@@ -17,6 +17,11 @@ output "public_subnet_ids" {
   value       = module.vpc.public_subnets
 }
 
+output "nat_gateway_ips" {
+  description = "List of NAT Gateway public IPs (use for whitelisting outbound cluster traffic)"
+  value       = module.vpc.nat_public_ips
+}
+
 #------------------------------------------------------------------------------
 # EKS Outputs
 #------------------------------------------------------------------------------
@@ -77,7 +82,7 @@ output "argocd_namespace" {
 
 output "ssm_datadog_api_key_name" {
   description = "SSM Parameter name for Datadog API Key - update this in AWS Console"
-  value       = aws_ssm_parameter.datadog_api_key.name
+  value       = data.aws_ssm_parameter.datadog_api_key.name
 }
 
 #------------------------------------------------------------------------------

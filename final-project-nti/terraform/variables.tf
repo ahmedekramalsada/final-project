@@ -188,16 +188,20 @@ variable "argocd_chart_version" {
   default     = "5.53.0"
 }
 
-variable "mongodb_uri" {
-  description = "MongoDB connection URI (stored in SSM Parameter Store)"
+#------------------------------------------------------------------------------
+# Azure DevOps Configuration
+#------------------------------------------------------------------------------
+
+variable "ado_org_url" {
+  description = "URL of the Azure DevOps organization"
   type        = string
-  default     = "placeholder"
-  sensitive   = true
+  default     = "https://dev.azure.com/myorg"
 }
 
-variable "datadog_api_key" {
-  description = "Datadog API key for monitoring (stored in SSM Parameter Store)"
+
+
+variable "ado_pool_name" {
+  description = "Name of the Agent Pool in Azure DevOps"
   type        = string
-  default     = "placeholder"
-  sensitive   = true
+  default     = "self-hosted-k8s"
 }
