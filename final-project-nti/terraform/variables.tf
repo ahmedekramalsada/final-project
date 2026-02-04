@@ -195,7 +195,7 @@ variable "argocd_chart_version" {
 variable "azuredevops_org_url" {
   description = "URL of the Azure DevOps organization"
   type        = string
-  default     = "https://dev.azure.com/myorg"
+  default     = "https://dev.azure.com/aekram2"
 }
 
 

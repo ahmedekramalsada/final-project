@@ -119,4 +119,9 @@ resource "kubernetes_manifest" "azuredevops_scaled_job" {
   }
 
   depends_on = [helm_release.keda, kubernetes_manifest.azuredevops_trigger_auth]
+
+  field_manager {
+    force_conflicts = true
+  }
+
 }

@@ -11,9 +11,9 @@ resources:
 variables:
   tag: "$(Build.BuildId)"
   aws_region: "us-east-1"
-  # You will need to replace these with the actual values from Terraform Output after first apply
-  ecr_registry: "REPLACE_WITH_YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com"
-  ecr_repository_uri: "REPLACE_WITH_YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/final-project-app"
+  # ECR Configuration - Auto-updated from Terraform Output
+  ecr_registry: "975049943907.dkr.ecr.us-east-1.amazonaws.com"
+  ecr_repository_uri: "975049943907.dkr.ecr.us-east-1.amazonaws.com/final-project-app"
 
 stages:
   - stage: TestConnection
