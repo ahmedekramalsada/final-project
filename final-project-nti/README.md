@@ -2,16 +2,19 @@
 
 This project provisions a comprehensive Kubernetes infrastructure on AWS using Terraform. It includes an EKS cluster, NGINX Ingress, ArgoCD for GitOps, and ephemeral Azure DevOps agents managed by KEDA.
 
-## Architecture Highlights
+## Architecture Guidelines
 
 -   **Cloud Provider**: AWS (us-east-1)
 -   **Orchestrator**: Amazon EKS (v1.30)
 -   **Networking**: Custom VPC with public/private subnets and NAT Gateways.
 -   **CI/CD**:
-    -   **Azure DevOps**: Ephemeral agents running on EKS (autoscale 0 -> N).
+    -   **Azure DevOps**: Ephemeral agents running on EKS. The agents are "self-hosted" but spin up on-demand using KEDA (Kubernetes Event-driven Autoscaling).
     -   **ArgoCD**: Continuous Deployment for Kubernetes manifests.
 -   **Monitoring**: Datadog (integrated via secrets).
--   **Security**: All sensitive secrets are managed externally via **AWS SSM Parameter Store** and are **NOT** stored in Terraform state.
+-   **Secrets Management**:
+    -   We use **AWS Systems Manager (SSM) Parameter Store** to hold sensitive values.
+    -   Terraform allows you to reference these secrets without storing them in your state file.
+    -   **IMPORTANT**: You must create these secrets manually.
 
 ## Prerequisites
 
@@ -26,12 +29,11 @@ Before you begin, ensure you have the following tools installed:
 This project uses a "Security First" approach. Terraform **does not create** secrets. It only reads them. You **MUST** manually create the following parameters in AWS SSM Parameter Store before running Terraform. This ensures secrets persist even if you destroy the infrastructure.
 
 ### 1.1 Azure DevOps Personal Access Token (PAT)
-Required for the ephemeral agents to register with your organization.
-*Scope required: Agent Pools (Read & Manage)*
+Required for the ephemeral agents to register with your organization. This token must have **Agent Pools (Read & Manage)** scope.
 
 ```bash
 aws ssm put-parameter \
-    --name "/devops-infrastructure/ado-pat" \
+    --name "/devops-infrastructure/azuredevops-pat" \
     --value "YOUR_AZURE_DEVOPS_PAT" \
     --type "SecureString" \
     --region us-east-1
@@ -66,11 +68,11 @@ You can configure the project using environment variables or a `terraform.tfvars
 **Required Environment Variables:**
 ```bash
 # Azure DevOps Organization URL
-export TF_VAR_ado_org_url="https://dev.azure.com/YOUR_ORG"
+export TF_VAR_azuredevops_org_url="https://dev.azure.com/YOUR_ORG"
 
 # Azure DevOps Agent Pool Name (Default: self-hosted-k8s)
-# You must create this pool in ADO first!
-export TF_VAR_ado_pool_name="my-k8s-pool"
+# You must create this pool in Azure DevOps -> Project Settings -> Agent Pools first!
+export TF_VAR_azuredevops_pool_name="my-k8s-pool"
 ```
 
 ## Step 3: Deployment
@@ -78,13 +80,15 @@ export TF_VAR_ado_pool_name="my-k8s-pool"
 Navigate to the `terraform` directory and run:
 
 ```bash
-# Initialize Terraform
+cd terraform
+
+# Initialize Terraform (downloads providers)
 terraform init
 
-# Validate configuration
+# Validate configuration (checks for syntax errors)
 terraform validate
 
-# Plan and Apply
+# Plan and Apply (provisions resources)
 terraform apply --auto-approve
 ```
 
@@ -104,20 +108,21 @@ kubectl get nodes
 ## Usage Guides
 
 ### Ephemeral Azure DevOps Agents
-The agents are configured as a **KEDA ScaledJob**.
-1.  **Idle State**: You will see **0 agents** running in the `ado-agents` namespace.
+The agents are configured as a **KEDA ScaledJob** in the `azuredevops-agents` namespace.
+
+1.  **Idle State**: Run `kubectl get pods -n azuredevops-agents`. You should see **0 agents**.
 2.  **Trigger**: Queue a pipeline in Azure DevOps targeting your pool (`my-k8s-pool`).
-3.  **Active**: KEDA detects the job and launches a pod.
-4.  **Finish**: The pod runs the job and terminates immediately.
+3.  **Active**: KEDA detects the queued job and creates a pod (e.g., `azuredevops-agent-scaled-job-xyz`).
+4.  **Finish**: The pod processes the job and terminates immediately after completion.
 
 **Troubleshooting Agents**:
-```bash
-# Check KEDA logs if agents don't start
-kubectl logs -n keda -l app=keda-operator
-```
+-   **Agents not scaling?** Check KEDA logs: `kubectl logs -n keda -l app=keda-operator`
+-   **Authentication failed?** Verify your PAT in SSM is correct and explicitly has "Agent Pools (Read & Manage)" permission.
+-   **Namespace events**: `kubectl get events -n azuredevops-agents`
 
 ### ArgoCD
-ArgoCD is installed in the `argocd` namespace.
+ArgoCD is installed in the `argocd` namespace for GitOps application delivery.
+
 -   **Retrieve Admin Password**:
     ```bash
     kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d

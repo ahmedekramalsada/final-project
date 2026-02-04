@@ -192,7 +192,7 @@ variable "argocd_chart_version" {
 # Azure DevOps Configuration
 #------------------------------------------------------------------------------
 
-variable "ado_org_url" {
+variable "azuredevops_org_url" {
   description = "URL of the Azure DevOps organization"
   type        = string
   default     = "https://dev.azure.com/myorg"
@@ -200,7 +200,7 @@ variable "ado_org_url" {
 
 
 
-variable "ado_pool_name" {
+variable "azuredevops_pool_name" {
   description = "Name of the Agent Pool in Azure DevOps"
   type        = string
   default     = "self-hosted-k8s"
