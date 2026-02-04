@@ -117,10 +117,27 @@ The project includes an ECR repository and an Azure Pipeline configuration to au
     -   Push the image with tags `latest` and the Build ID.
 
 ### Ephemeral Azure DevOps Agents
-The agents are configured as a **KEDA ScaledJob** in the `azuredevops-agents` namespace.
+The agents are configured as a **KEDA ScaledJob** in the `azuredevops-agents` namespace. They use a **custom Docker image** stored in ECR.
 
+#### Building the Agent Image (One-Time Setup)
+Before agents can scale, you must build and push the custom agent image:
+
+```bash
+# Get ECR login
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(terraform output -raw agent_ecr_repository_url)
+
+# Build the agent image
+cd ../agent
+docker build -t azp-agent .
+
+# Tag and push to ECR
+docker tag azp-agent:latest $(terraform output -raw agent_ecr_repository_url):latest
+docker push $(terraform output -raw agent_ecr_repository_url):latest
+```
+
+#### How Scaling Works
 1.  **Idle State**: Run `kubectl get pods -n azuredevops-agents`. You should see **0 agents**.
-2.  **Trigger**: Queue a pipeline in Azure DevOps targeting your pool (`my-k8s-pool`).
+2.  **Trigger**: Queue a pipeline in Azure DevOps targeting your pool (`self-hosted-k8s`).
 3.  **Active**: KEDA detects the queued job and creates a pod (e.g., `azuredevops-agent-scaled-job-xyz`).
 4.  **Finish**: The pod processes the job and terminates immediately after completion.
 

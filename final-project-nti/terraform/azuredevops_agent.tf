@@ -51,9 +51,9 @@ resource "kubernetes_manifest" "azuredevops_scaled_job" {
         template = {
           spec = {
             containers = [{
-              name  = "azuredevops-agent"
-              # FIXED: Updated to 22.04 to fix the Version Error
-              image = "mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-22.04"
+              name = "azuredevops-agent"
+              # Use custom agent image from ECR (build from agent/Dockerfile)
+              image = "${aws_ecr_repository.agent_repo.repository_url}:latest"
               env = [
                 { name = "AZP_URL", value = var.azuredevops_org_url },
                 { name = "AZP_POOL", value = var.azuredevops_pool_name },
@@ -70,7 +70,7 @@ resource "kubernetes_manifest" "azuredevops_scaled_job" {
         type = "azure-pipelines"
         metadata = {
           # FIXED: Use poolName instead of poolID for easier setup
-          poolName = var.azuredevops_pool_name
+          poolName                   = var.azuredevops_pool_name
           targetPipelinesQueueLength = "1"
         }
         authenticationRef = { name = "azuredevops-trigger-auth" }
