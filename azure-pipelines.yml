@@ -18,6 +18,7 @@ stages:
   - job: Build
     displayName: Build
     pool:
+      name: "self-hosted-k8s"
       vmImage: ubuntu-latest
     steps:
     - task: Docker@2
