@@ -107,7 +107,7 @@ resource "kubernetes_manifest" "azuredevops_scaled_job" {
           type = "azure-pipelines"
           metadata = {
             organizationURL            = var.azuredevops_org_url
-            poolName                   = var.azuredevops_pool_name
+            poolID                     = "11"
             targetPipelinesQueueLength = "1"
           }
           authenticationRef = {
