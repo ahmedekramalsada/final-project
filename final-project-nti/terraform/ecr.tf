@@ -11,7 +11,6 @@ resource "aws_ecr_repository" "app_repo" {
     Environment = "production"
   }
 }
-
 resource "aws_ecr_repository" "agent_repo" {
   name                 = "azp-agent"
   image_tag_mutability = "MUTABLE"
