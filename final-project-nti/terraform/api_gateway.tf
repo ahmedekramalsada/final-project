@@ -12,6 +12,27 @@ resource "aws_apigatewayv2_api" "main" {
   tags = local.common_tags
 }
 
+# Default route to catch all traffic
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.eks_ingress.id}"
+}
+
+# Integration with the EKS cluster Ingress LoadBalancer
+resource "aws_apigatewayv2_integration" "eks_ingress" {
+  api_id             = aws_apigatewayv2_api.main.id
+  integration_type   = "HTTP_PROXY"
+  integration_method = "ANY"
+
+  # Note: The URI should be the external DNS name of the NGINX Ingress LoadBalancer.
+  # Since this varies, a variable or a manual update after deployment is recommended.
+  integration_uri = "http://REPLACE_WITH_INGRESS_LB_DNS"
+
+  connection_type = "INTERNET"
+}
+
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.main.id
   name        = "$default"

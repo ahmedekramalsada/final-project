@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: final-project-app
+  namespace: default
+  labels:
+    app: final-project-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: final-project-app
+  template:
+    metadata:
+      labels:
+        app: final-project-app
+    spec:
+      containers:
+        - name: app
+          # Replace with your actual ECR image URL after build
+          image: 975049943907.dkr.ecr.us-east-1.amazonaws.com/final-project-app:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: uri
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
