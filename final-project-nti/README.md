@@ -32,8 +32,16 @@ graph TD
 - **Scaling**: KEDA (Kubernetes Event-driven Autoscaling)
 - **GitOps**: ArgoCD
 - **App Stack**: Node.js, Express, MongoDB Atlas
+- **Security**: AWS Cognito (JWT-based Authorization for API Gateway)
 
 ---
+
+## 🔒 Security Model
+The API Gateway is protected by **AWS Cognito**. Users must authenticate against the Cognito User Pool to receive a JWT token, which must be included in the `Authorization` header for all requests to the `$default` route.
+
+- **Authorizer**: JWT Authorizer in API Gateway.
+- **Identity Source**: `$request.header.Authorization`.
+- **Identity Provider**: AWS Cognito User Pool.
 
 ## 🛠️ Step 1: Manual Secret Setup (Crucial)
 Terraform reads secrets from **AWS SSM Parameter Store** for security. You must create these manually before running Terraform:

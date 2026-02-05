@@ -12,13 +12,6 @@ resource "aws_apigatewayv2_api" "main" {
   tags = local.common_tags
 }
 
-# Default route to catch all traffic
-resource "aws_apigatewayv2_route" "default" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "$default"
-  target    = "integrations/${aws_apigatewayv2_integration.eks_ingress.id}"
-}
-
 # Integration with the EKS cluster Ingress LoadBalancer
 resource "aws_apigatewayv2_integration" "eks_ingress" {
   api_id             = aws_apigatewayv2_api.main.id
@@ -61,3 +54,28 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
 
   tags = local.common_tags
 }
+
+# 3. API Gateway Authorizer (The Security Guard)
+resource "aws_apigatewayv2_authorizer" "cognito" {
+  api_id           = aws_apigatewayv2_api.main.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "cognito-authorizer"
+
+  jwt_configuration {
+    audience = [aws_cognito_user_pool_client.client.id]
+    issuer   = "https://${aws_cognito_user_pool.main.endpoint}"
+  }
+}
+
+# 4. Route (Protected by Cognito)
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.eks_ingress.id}"
+
+  # Protect the route with Cognito
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
