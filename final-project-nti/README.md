@@ -71,4 +71,4 @@ Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via AWS S
 ## Current Infrastructure Snapshot (as of Feb 2026)
 - **Active Compute**: 1x `t3.micro` EC2 in `us-east-1` (Azure DevOps Agent).
 - **Storage**: S3 bucket `backend-s3-final-project` for state management.
-- **Networking**: VPCs available in `us-east-1` and `eu-north-1`.
+- **Networking**: Default VPCs available in `us-east-1` and `eu-north-1`. All custom infrastructure cleaned up.
