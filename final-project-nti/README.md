@@ -21,21 +21,40 @@ We adhere to a layered architecture to separate concerns:
 
 ## Pipelines
 
-### 1. Infrastructure Pipeline (`pipelines/infrastructure-pipeline.yml`)
-*   **Goal**: Provisions the base AWS environment and essential system components.
-*   **Triggers**: Changes to `terraform/infrastructure/`.
-*   **Key Resources**: VPC, EKS Cluster, ECR Repositories, KEDA, Azure DevOps Agents.
+### 1. Infra Pipeline (`pipelines/infrastructure-pipeline.yml`)
+*   **Stage**: **Infra**
+*   **Directory**: `terraform/infrastructure/`
+*   **Goal**: Provisions the base AWS environment and essential networking/compute components.
+*   **Components**:
+    *   **VPC & Subnets**: Networking foundation.
+    *   **EKS**: Kubernetes Cluster.
+    *   **Cognito**: User Authentication.
+    *   **API Gateway**, **ECR**, **Agents**.
 
-### 2. Tools Pipeline (`pipelines/tools-pipeline.yml`)
-*   **Goal**: Installs shared cluster services.
-*   **Triggers**: Changes to `terraform/tools/`.
-*   **Dependency**: Reads `infrastructure` state to configure the Kubernetes provider.
-*   **Key Resources**: Nginx Ingress, ArgoCD.
+### 2. Platform Pipeline (`pipelines/tools-pipeline.yml`)
+*   **Stage**: **Platform**
+*   **Directory**: `terraform/tools/`
+*   **Goal**: Installs shared cluster services and platform tools.
+*   **Dependency**: Runs after Infra pipeline; reads `infrastructure` state.
+*   **Components**:
+    *   **ArgoCD**: GitOps Continuous Delivery.
+    *   **Sonatype Nexus**: Artifact Repository.
+    *   **HashiCorp Vault**: Secrets Management.
+    *   **SonarQube**: Code Quality Scanner.
+    *   **Nginx Ingress Controller**: Traffic routing.
 
-### 3. Application Pipeline (`pipelines/application-pipeline.yml`)
-*   **Goal**: Builds and deploys the application.
-*   **Triggers**: Changes to `app/`.
-*   **Steps**: Build Docker Image -> Push to ECR -> Update Manifests -> ArgoCD Sync.
+### 3. CI/CD Pipeline (`pipelines/application-pipeline.yml`)
+*   **Stage**: **CI/CD**
+*   **Directory**: `pipelines/` & `app/`
+*   **Goal**: Builds, secures, and deploys the application.
+*   **Flow**:
+    1.  **CI (Continuous Integration)**:
+        *   **Image Build**: Docker build.
+        *   **Trivy Scan**: Container image security scan.
+        *   **SAST**: SonarQube static analysis.
+        *   **Image Push**: Push to ECR.
+    2.  **CD (Continuous Delivery)**:
+        *   **ArgoCD**: Syncs changes to the cluster (GitOps).
 
 ## Getting Started
 

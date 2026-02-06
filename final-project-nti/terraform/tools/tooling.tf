@@ -85,3 +85,22 @@ resource "helm_release" "nexus" {
     value = "LoadBalancer"
   }
 }
+
+# --- HashiCorp Vault (Secrets Management) ---
+resource "helm_release" "vault" {
+  name             = "vault"
+  repository       = "https://helm.releases.hashicorp.com"
+  chart            = "vault"
+  namespace        = "tooling"
+  create_namespace = true
+
+  set {
+    name  = "ui.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "ui.service.type"
+    value = "LoadBalancer"
+  }
+}
