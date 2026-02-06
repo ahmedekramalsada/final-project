@@ -19,7 +19,7 @@ steps:
     inputs:
       terraformVersion: "latest"
 
-  - task: TerraformTaskV4@4
+  - task: TerraformTask@4
     displayName: "Terraform Init"
     inputs:
       provider: "aws"
@@ -30,14 +30,14 @@ steps:
       backendAWSKey: "$(terraform_backend_key)"
       backendAWSRegion: "$(terraform_region)"
 
-  - task: TerraformTaskV4@4
+  - task: TerraformTask@4
     displayName: "Terraform Validate"
     inputs:
       provider: "aws"
       command: "validate"
       workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
 
-  - task: TerraformTaskV4@4
+  - task: TerraformTask@4
     displayName: "Terraform Plan"
     inputs:
       provider: "aws"
@@ -45,12 +45,4 @@ steps:
       workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
 
-  - task: TerraformTaskV4@4
-    displayName: "Terraform Apply"
-    inputs:
-      provider: "aws"
-      command: "apply"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
-      environmentServiceNameAWS: "$(aws_service_connection)"
-      commandOptions: "-auto-approve"
-
+ 
