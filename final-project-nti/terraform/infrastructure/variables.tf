@@ -1,7 +1,3 @@
-#------------------------------------------------------------------------------
-# General Configuration
-#------------------------------------------------------------------------------
-
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
@@ -118,7 +114,7 @@ variable "cluster_endpoint_private_access" {
 variable "node_instance_types" {
   description = "List of instance types for the EKS node group"
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["t3.large"]
 }
 
 variable "node_min_size" {
@@ -161,34 +157,6 @@ variable "api_gateway_log_retention_days" {
 }
 
 #------------------------------------------------------------------------------
-# Tooling Configuration
-#------------------------------------------------------------------------------
-
-variable "enable_nginx_ingress" {
-  description = "Enable NGINX Ingress Controller deployment"
-  type        = bool
-  default     = true
-}
-
-variable "nginx_chart_version" {
-  description = "Helm chart version for NGINX Ingress Controller"
-  type        = string
-  default     = "4.9.0"
-}
-
-variable "enable_argocd" {
-  description = "Enable ArgoCD deployment"
-  type        = bool
-  default     = true
-}
-
-variable "argocd_chart_version" {
-  description = "Helm chart version for ArgoCD"
-  type        = string
-  default     = "5.53.0"
-}
-
-#------------------------------------------------------------------------------
 # Azure DevOps Configuration
 #------------------------------------------------------------------------------
 
@@ -198,12 +166,8 @@ variable "azuredevops_org_url" {
   default     = "https://dev.azure.com/aekram2"
 }
 
-
-
 variable "azuredevops_pool_name" {
   description = "Name of the Agent Pool in Azure DevOps"
   type        = string
   default     = "self-hosted-k8s"
 }
-
-

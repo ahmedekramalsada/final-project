@@ -19,7 +19,6 @@ resource "helm_release" "nginx" {
     value = "true"
   }
 
-  depends_on = [module.eks]
 }
 
 # ArgoCD for GitOps-based continuous deployment
@@ -38,7 +37,6 @@ resource "helm_release" "argocd" {
     value = "LoadBalancer"
   }
 
-  depends_on = [module.eks]
 }
 
 # MongoDB URI (Externally Managed in SSM)
@@ -53,14 +51,37 @@ data "aws_ssm_parameter" "datadog_api_key" {
   with_decryption = true
 }
 
-# KEDA for Event-Driven Autoscaling (Required for ADO Agents)
-resource "helm_release" "keda" {
-  name             = "keda"
-  repository       = "https://kedacore.github.io/charts"
-  chart            = "keda"
-  namespace        = "keda"
-  create_namespace = true
-  version          = "2.13.0"
 
-  depends_on = [module.eks]
+# --- SonarQube (Code Quality Scanner) ---
+resource "helm_release" "sonarqube" {
+  name             = "sonarqube"
+  repository       = "https://SonarSource.github.io/helm-charts-sonarqube"
+  chart            = "sonarqube"
+  namespace        = "tooling"
+  create_namespace = true
+
+  set {
+    name  = "service.type"
+    value = "LoadBalancer"
+  }
+
+  # SonarQube requires significant memory; t3.medium is the minimum
+  set {
+    name  = "resources.requests.memory"
+    value = "2Gi"
+  }
+}
+
+# --- Sonatype Nexus (Artifact Repository) ---
+resource "helm_release" "nexus" {
+  name             = "nexus"
+  repository       = "https://sonatype.github.io/helm3-charts/"
+  chart            = "nexus-repository-manager"
+  namespace        = "tooling"
+  create_namespace = true
+
+  set {
+    name  = "nexus.service.type"
+    value = "LoadBalancer"
+  }
 }

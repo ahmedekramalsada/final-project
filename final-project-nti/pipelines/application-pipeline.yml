@@ -1,0 +1,42 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - app/**
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  aws_service_connection: "AWS-Connection" # Replace with your Actual Service Connection Name
+  ecr_repository_name: "final-project-repo" # Match your ECR repository name from terraform
+  image_tag: "$(Build.BuildId)"
+
+steps:
+  - task: Docker@2
+    displayName: "Build and Push Docker Image"
+    inputs:
+      containerRegistry: "$(aws_service_connection)" # Ensure you have a Docker Registry Service Connection linked to ECR
+      repository: "$(ecr_repository_name)"
+      command: "buildAndPush"
+      Dockerfile: "app/Dockerfile"
+      tags: |
+        $(image_tag)
+        latest
+
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish Artifacts (Manifests)"
+    inputs:
+      PathtoPublish: "k8s"
+      ArtifactName: "manifests"
+
+  # Optional: Add a step to update GitOps repo if using Argocd-image-updater or separate repo
+  # For now, we assume ArgoCD watches this repo or image updater handles it.
+  # If you need to manually update a value in a file:
+  - script: |
+      echo "Updating k8s deployment with new tag $(image_tag)..."
+      sed -i "s|image: .*|image: $(aws_account_id).dkr.ecr.$(aws_region).amazonaws.com/$(ecr_repository_name):$(image_tag)|g" k8s/deployment.yaml
+      # In a real GitOps flow, you would git commit and push this change back to the repo.
+    displayName: "Update Manifests (Placeholder)"

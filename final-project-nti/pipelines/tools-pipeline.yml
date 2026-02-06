@@ -1,0 +1,49 @@
+trigger:
+  paths:
+    include:
+      - terraform/tools/**
+
+# Ensure this runs AFTER Infrastructure Pipeline
+dependencies: [] # In a real scenario, you can't easily depend on another pipeline unless using YAML resources or triggers. For now, manual or path trigger.
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  terraform_backend_bucket: "backend-s3-final-project"
+  terraform_backend_key: "tools/terraform.tfstate"
+  terraform_region: "us-east-1"
+  aws_service_connection: "AWS-Connection" # Replace with your Actual Service Connection Name
+
+steps:
+  - task: TerraformInstaller@1
+    inputs:
+      terraformVersion: "latest"
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Init"
+    inputs:
+      provider: "aws"
+      command: "init"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/tools"
+      backendServiceAWS: "$(aws_service_connection)"
+      backendAWSBucketName: "$(terraform_backend_bucket)"
+      backendAWSKey: "$(terraform_backend_key)"
+      backendAWSRegion: "$(terraform_region)"
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Plan"
+    inputs:
+      provider: "aws"
+      command: "plan"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/tools"
+      environmentServiceNameAWS: "$(aws_service_connection)"
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Apply"
+    inputs:
+      provider: "aws"
+      command: "apply"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/tools"
+      environmentServiceNameAWS: "$(aws_service_connection)"
+      commandOptions: "-auto-approve"

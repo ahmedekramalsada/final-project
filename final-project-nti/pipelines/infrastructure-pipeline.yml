@@ -1,0 +1,54 @@
+trigger:
+  paths:
+    include:
+      - terraform/infrastructure/**
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  # Define your backend S3 bucket and key here
+  terraform_backend_bucket: "backend-s3-final-project"
+  terraform_backend_key: "eks/terraform.tfstate"
+  terraform_region: "us-east-1"
+  aws_service_connection: "AWS-Connection" # Replace with your Actual Service Connection Name
+
+steps:
+  - task: TerraformInstaller@1
+    inputs:
+      terraformVersion: "latest"
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Init"
+    inputs:
+      provider: "aws"
+      command: "init"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      backendServiceAWS: "$(aws_service_connection)"
+      backendAWSBucketName: "$(terraform_backend_bucket)"
+      backendAWSKey: "$(terraform_backend_key)"
+      backendAWSRegion: "$(terraform_region)"
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Validate"
+    inputs:
+      provider: "aws"
+      command: "validate"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Plan"
+    inputs:
+      provider: "aws"
+      command: "plan"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      environmentServiceNameAWS: "$(aws_service_connection)"
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Apply"
+    inputs:
+      provider: "aws"
+      command: "apply"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      environmentServiceNameAWS: "$(aws_service_connection)"
+      commandOptions: "-auto-approve"
