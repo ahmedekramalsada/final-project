@@ -2,6 +2,10 @@
 
 This project provisions a complete AWS infrastructure with EKS, sets up a 3-stage deployment pipeline using Azure DevOps, and deploys a sample application with ArgoCD.
 
+### 📚 Detailed Documentation
+**[Click here for a comprehensive breakdown of every file and component in this project](./PROJECT_BREAKDOWN.md)**.
+This document explains "what it is, what it does, and why we use it" for every element in the codebase.
+
 ## Directory Structure
 
 We adhere to a layered architecture to separate concerns:
