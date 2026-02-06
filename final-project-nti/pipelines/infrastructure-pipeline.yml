@@ -11,7 +11,7 @@ variables:
   terraform_backend_bucket: "backend-s3-final-project"
   terraform_backend_key: "eks/terraform.tfstate"
   terraform_region: "us-east-1"
-  aws_service_connection: "AWS-Connection" # Replace with your Actual Service Connection Name
+  aws_service_connection: "terraform" # Replace with your Actual Service Connection Name
 
 steps:
   - task: TerraformInstaller@1
@@ -52,3 +52,4 @@ steps:
       workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: "-auto-approve"
+
