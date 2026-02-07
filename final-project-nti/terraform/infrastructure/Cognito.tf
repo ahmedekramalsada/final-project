@@ -9,7 +9,7 @@ resource "aws_cognito_user_pool" "main" {
     require_symbols   = true
     require_uppercase = true
   }
-
+ 
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
