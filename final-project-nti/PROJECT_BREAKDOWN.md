@@ -71,6 +71,7 @@ This project is a complete DevOps showcase implementing a Three-Tier Architectur
         *   **SonarQube**: Code quality dashboard.
         *   **Nexus**: Artifact storage.
         *   **Vault**: Secrets management.
+    *   **Load Balancing**: All these tools are configured as `type: LoadBalancer` in their respective Helm charts, which automatically provisions AWS Elastic Load Balancers (ELBs) for external access.
     *   `remote_state.tf`: Configures backend state storage.
 
 ---
@@ -87,9 +88,9 @@ This project is a complete DevOps showcase implementing a Three-Tier Architectur
     *   ArgoCD detects the change in Git and syncs (deploys) the new image to the cluster.
 
 ### 2. How to Access
-*   **App URL**: via API Gateway or Ingress LoadBalancer DNS.
+*   **App URL**: Accessible via the NGINX Ingress LoadBalancer DNS name.
+*   **Platform Tools**: Each tool (ArgoCD, SonarQube, etc.) provides a unique LoadBalancer DNS URL found in the `kubectl get svc` output.
 *   **Bastion**: SSH into the public IP (output from Terraform) to debug cluster issues.
-*   **Tools**: Accessed via their respective LoadBalancer URLs created by Helm.
 
 ## 4. Best Practices & Suggestions
 
