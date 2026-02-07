@@ -114,7 +114,7 @@ variable "cluster_endpoint_private_access" {
 variable "node_instance_types" {
   description = "List of instance types for the EKS node group"
   type        = list(string)
-  default     = ["t3.large"]
+  default     = ["t3.medium"]
 }
 
 variable "node_min_size" {

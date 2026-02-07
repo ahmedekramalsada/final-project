@@ -37,3 +37,13 @@ output "cluster_id" {
   description = "The name/id of the EKS cluster. Will block on cluster creation until the cluster is really ready"
   value       = module.eks.cluster_id
 }
+
+output "oidc_provider_arn" {
+  description = "The ARN of the OIDC Provider if enabled"
+  value       = module.eks.oidc_provider_arn
+}
+
+output "nlb_target_group_arn" {
+  description = "ARN of the NLB Target Group for NGINX Ingress"
+  value       = aws_lb_target_group.ingress_nginx.arn
+}

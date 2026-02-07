@@ -20,9 +20,18 @@ resource "aws_apigatewayv2_integration" "eks_ingress" {
 
   # Note: The URI should be the external DNS name of the NGINX Ingress LoadBalancer.
   # Since this varies, a variable or a manual update after deployment is recommended.
-  integration_uri = "http://1.1.1.1" # Temporary valid placeholder
+  # Use VPC Link for private integration with the NLB
+  integration_uri = aws_lb_listener.ingress_80.arn
+  connection_type = "VPC_LINK"
+  connection_id   = aws_apigatewayv2_vpc_link.eks.id
+}
 
-  connection_type = "INTERNET"
+resource "aws_apigatewayv2_vpc_link" "eks" {
+  name               = "${var.project}-vpc-link"
+  security_group_ids = []
+  subnet_ids         = module.vpc.private_subnets
+
+  tags = local.common_tags
 }
 
 

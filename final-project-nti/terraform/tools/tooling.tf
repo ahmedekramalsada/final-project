@@ -10,9 +10,15 @@ resource "helm_release" "nginx" {
   version          = var.nginx_chart_version
 
   set {
-    name  = "controller.service.type"
-    value = "LoadBalancer"
+    name  = "controller.service.enabled"
+    value = "true"
   }
+
+  set {
+    name  = "controller.service.type"
+    value = "NodePort"
+  }
+
 
   set {
     name  = "controller.metrics.enabled"
@@ -103,4 +109,83 @@ resource "helm_release" "vault" {
     name  = "ui.service.type"
     value = "LoadBalancer"
   }
+}
+
+# --- AWS Load Balancer Controller (Required for NLB) ---
+
+data "aws_iam_policy_document" "lb_controller_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [data.terraform_remote_state.infrastructure.outputs.oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(data.terraform_remote_state.infrastructure.outputs.oidc_provider_arn, "/^(.*provider/)/", "")}:sub"
+      values   = ["system:serviceaccount:kube-system:aws-load-balancer-controller"]
+    }
+  }
+}
+
+resource "aws_iam_role" "lb_controller" {
+  name               = "${var.project}-lb-controller-role"
+  assume_role_policy = data.aws_iam_policy_document.lb_controller_assume.json
+}
+
+resource "aws_iam_role_policy_attachment" "lb_controller_attach" {
+  role       = aws_iam_role.lb_controller.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSLoadBalancerControllerIAMPolicy"
+}
+
+resource "helm_release" "aws_load_balancer_controller" {
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+
+  set {
+    name  = "clusterName"
+    value = data.terraform_remote_state.infrastructure.outputs.cluster_name
+  }
+
+  set {
+    name  = "serviceAccount.create"
+    value = "true"
+  }
+
+  set {
+    name  = "serviceAccount.name"
+    value = "aws-load-balancer-controller"
+  }
+
+  set {
+    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+    value = aws_iam_role.lb_controller.arn
+  }
+}
+
+# --- TargetGroupBinding (Connects NGINX to Static Infra NLB) ---
+resource "kubernetes_manifest" "nginx_tgb" {
+  manifest = {
+    apiVersion = "elbv2.k8s.aws/v1beta1"
+    kind       = "TargetGroupBinding"
+    metadata = {
+      name      = "nginx-tgb"
+      namespace = "ingress-nginx"
+    }
+    spec = {
+      serviceRef = {
+        name = "nginx-ingress-nginx-controller" # Check exact service name from Helm chart
+        port = 80
+      }
+      targetGroupARN = data.terraform_remote_state.infrastructure.outputs.nlb_target_group_arn
+      targetType     = "ip"
+    }
+  }
+
+  depends_on = [helm_release.nginx, helm_release.aws_load_balancer_controller]
 }
