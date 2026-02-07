@@ -27,7 +27,8 @@ override.tf.json
 # !example_override.tf
 
 # Include plugin cache directory
-.terraform.lock.hcl
+# Include plugin cache directory
+
 
 # --- Kubernetes / Helm ---
 # Ignore helm lock files if you prefer
