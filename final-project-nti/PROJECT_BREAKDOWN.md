@@ -58,7 +58,6 @@ This project is a complete DevOps showcase implementing a Three-Tier Architectur
     *   `ecr.tf`: Creates Elastic Container Registries for the App and the Build Agent.
     *   `api_gateway.tf`: Sets up an AWS HTTP API Gateway as the entry point, integrated with Cognito for authentication.
     *   `Cognito.tf`: Manages User Pools to secure access to the application.
-    *   `bastion.tf`: A secure EC2 "jump box" to allow administrators to SSH in and run `kubectl` commands.
     *   `azuredevops_agent.tf` & `keda.tf`: Deploys self-hosted Azure DevOps agents into the cluster that auto-scale using KEDA based on workload.
     *   `provider.tf`, `variables.tf`: Configuration for AWS provider and input variables.
 
@@ -90,7 +89,7 @@ This project is a complete DevOps showcase implementing a Three-Tier Architectur
 ### 2. How to Access
 *   **App URL**: Accessible via the NGINX Ingress LoadBalancer DNS name.
 *   **Platform Tools**: Each tool (ArgoCD, SonarQube, etc.) provides a unique LoadBalancer DNS URL found in the `kubectl get svc` output.
-*   **Bastion**: SSH into the public IP (output from Terraform) to debug cluster issues.
+
 
 ## 4. Best Practices & Suggestions
 
