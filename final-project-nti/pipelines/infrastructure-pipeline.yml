@@ -15,9 +15,6 @@ variables:
   aws_service_connection: "terraform" # Replace with your Actual Service Connection Name
 
 steps:
-  - task: TerraformInstaller@1
-    inputs:
-      terraformVersion: "latest"
 
   - task: TerraformTaskV4@4
     displayName: "Terraform Init"
