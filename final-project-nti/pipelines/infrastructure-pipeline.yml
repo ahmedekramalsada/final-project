@@ -24,7 +24,7 @@ steps:
     inputs:
       provider: "aws"
       command: "init"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       backendServiceAWS: "$(aws_service_connection)"
       backendAWSBucketName: "$(terraform_backend_bucket)"
       backendAWSKey: "$(terraform_backend_key)"
@@ -35,14 +35,14 @@ steps:
     inputs:
       provider: "aws"
       command: "validate"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
 
   - task: TerraformTaskV4@4
     displayName: "Terraform Plan"
     inputs:
       provider: "aws"
       command: "plan"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
 
   - task: TerraformTaskV4@4
@@ -50,6 +50,6 @@ steps:
     inputs:
       provider: "aws"
       command: "apply"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: "-auto-approve"
