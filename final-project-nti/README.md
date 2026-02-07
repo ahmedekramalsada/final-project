@@ -64,9 +64,10 @@ We adhere to a layered architecture to separate concerns:
 
 This project uses a multi-layered networking approach to ensure high availability and secure access:
 
-- **AWS Load Balancers**: Created automatically by Kubernetes `LoadBalancer` services.
-    - **NGINX Ingress Controller**: Provisions an external Load Balancer (ELB/NLB) that serves as the main entry point for all web traffic.
-    - **Platform Tools**: ArgoCD, SonarQube, Nexus, and Vault are each exposed via their own Load Balancer for direct access.
+- **AWS Load Balancers**:
+    - **Static NLB**: Provisioned in the `infrastructure` pipeline. This remains static regardless of cluster changes.
+    - **NGINX Ingress Controller**: Configured in `tools` to bind to the static NLB Target Group.
+    - **Platform Tools**: ArgoCD, SonarQube, etc., are exposed via their own Load Balancers.
 - **Traffic Routing**: External traffic hits the Load Balancer, which routes to the NGINX Ingress Controller, which then forwards traffic to the appropriate `ClusterIP` service based on the hostname/path.
 - **API Gateway**: Provides an additional layer of management and security (via Cognito) for programmatic access.
 
