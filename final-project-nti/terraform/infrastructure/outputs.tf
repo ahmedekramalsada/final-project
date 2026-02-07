@@ -18,15 +18,7 @@ output "cluster_name" {
   value       = module.eks.cluster_name
 }
 
-output "ecr_repository_url" {
-  description = "The URL of the ECR repository"
-  value       = aws_ecr_repository.app_repo.repository_url
-}
 
-output "agent_ecr_repository_url" {
-  description = "The URL of the agent ECR repository"
-  value       = aws_ecr_repository.agent_repo.repository_url
-}
 
 output "cluster_certificate_authority_data" {
   description = "Base64 encoded certificate data required to communicate with the cluster"

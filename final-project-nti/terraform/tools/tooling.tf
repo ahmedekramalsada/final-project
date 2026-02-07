@@ -45,17 +45,7 @@ resource "helm_release" "argocd" {
 
 }
 
-# MongoDB URI (Externally Managed in SSM)
-data "aws_ssm_parameter" "mongo_uri" {
-  name            = "/${var.project}/mongodb-uri"
-  with_decryption = true
-}
 
-# Datadog API Key (Externally Managed in SSM)
-data "aws_ssm_parameter" "datadog_api_key" {
-  name            = "/${var.project}/datadog-api-key"
-  with_decryption = true
-}
 
 
 # --- SonarQube (Code Quality Scanner) ---
@@ -78,38 +68,9 @@ resource "helm_release" "sonarqube" {
   }
 }
 
-# --- Sonatype Nexus (Artifact Repository) ---
-resource "helm_release" "nexus" {
-  name             = "nexus"
-  repository       = "https://sonatype.github.io/helm3-charts/"
-  chart            = "nexus-repository-manager"
-  namespace        = "tooling"
-  create_namespace = true
 
-  set {
-    name  = "nexus.service.type"
-    value = "LoadBalancer"
-  }
-}
 
-# --- HashiCorp Vault (Secrets Management) ---
-resource "helm_release" "vault" {
-  name             = "vault"
-  repository       = "https://helm.releases.hashicorp.com"
-  chart            = "vault"
-  namespace        = "tooling"
-  create_namespace = true
 
-  set {
-    name  = "ui.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "ui.service.type"
-    value = "LoadBalancer"
-  }
-}
 
 # --- AWS Load Balancer Controller (Required for NLB) ---
 
