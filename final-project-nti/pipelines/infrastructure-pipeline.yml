@@ -35,14 +35,14 @@ steps:
     inputs:
       provider: "aws"
       command: "validate"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      workingDirectory: "/terraform/infrastructure"
 
   - task: TerraformTaskV4@4
     displayName: "Terraform Plan"
     inputs:
       provider: "aws"
       command: "plan"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      workingDirectory: "/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
 
   - task: TerraformTaskV4@4
@@ -50,6 +50,6 @@ steps:
     inputs:
       provider: "aws"
       command: "apply"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/terraform/infrastructure"
+      workingDirectory: "/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: "-auto-approve"
