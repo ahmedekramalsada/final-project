@@ -156,18 +156,4 @@ variable "api_gateway_log_retention_days" {
   default     = 30
 }
 
-#------------------------------------------------------------------------------
-# Azure DevOps Configuration
-#------------------------------------------------------------------------------
 
-variable "azuredevops_org_url" {
-  description = "URL of the Azure DevOps organization"
-  type        = string
-  default     = "https://dev.azure.com/aekram2"
-}
-
-variable "azuredevops_pool_name" {
-  description = "Name of the Agent Pool in Azure DevOps"
-  type        = string
-  default     = "self-hosted-k8s"
-}

@@ -54,7 +54,7 @@ resource "kubernetes_manifest" "azuredevops_scaled_job" {
             containers = [{
               name = "azuredevops-agent"
               # Use custom agent image from ECR (build from agent/Dockerfile)
-              image = "${aws_ecr_repository.agent_repo.repository_url}:latest"
+              image = "${data.terraform_remote_state.infrastructure.outputs.agent_ecr_repository_url}:latest"
               env = [
                 { name = "AZP_URL", value = var.azuredevops_org_url },
                 { name = "AZP_POOL", value = var.azuredevops_pool_name },

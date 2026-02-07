@@ -1,5 +1,5 @@
 resource "aws_lb" "ingress_nlb" {
-  name               = "${var.project}-ingress-nlb"
+  name               = "${var.project}-nlb"
   internal           = false
   load_balancer_type = "network"
   subnets            = module.vpc.public_subnets

@@ -7,5 +7,5 @@ resource "helm_release" "keda" {
   create_namespace = true
   version          = "2.13.0"
 
-  depends_on = [module.eks]
+  # Depends on EKS cluster readiness, which 'tools' pipeline assumes
 }
