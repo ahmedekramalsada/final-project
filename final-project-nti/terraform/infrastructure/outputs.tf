@@ -47,3 +47,18 @@ output "nlb_target_group_arn" {
   description = "ARN of the NLB Target Group for NGINX Ingress"
   value       = aws_lb_target_group.ingress_nginx.arn
 }
+
+output "api_gateway_endpoint" {
+  description = "The endpoint of the API Gateway"
+  value       = aws_apigatewayv2_api.main.api_endpoint
+}
+
+output "cognito_user_pool_id" {
+  description = "The ID of the Cognito User Pool"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "cognito_client_id" {
+  description = "The ID of the Cognito User Pool Client"
+  value       = aws_cognito_user_pool_client.client.id
+}
