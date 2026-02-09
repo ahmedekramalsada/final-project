@@ -51,6 +51,9 @@ steps:
 
   # - task: TerraformTaskV4@4
   #   displayName: "Terraform Apply"
+  #   env:
+  #     VAULT_ADDR: "http://$(vault-ip):8200"
+  #     VAULT_TOKEN: "$(vault-token)"
   #   inputs:
   #     provider: "aws"
   #     command: "apply"
