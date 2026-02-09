@@ -157,3 +157,14 @@ variable "api_gateway_log_retention_days" {
 }
 
 
+
+variable "vault_addr" {
+  description = "The URL of the Vault server (e.g., http://1.2.3.4:8200)"
+  type        = string
+}
+
+variable "vault_token" {
+  description = "The Vault token to authenticate with (Sensitive!)"
+  type        = string
+  sensitive   = true
+}
