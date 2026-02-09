@@ -44,6 +44,7 @@ steps:
       command: "plan"
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
+      commandOptions: '-var="vault_addr=$(vault_addr)" -var="vault_token=$(vault_token)"'
 
   - task: TerraformTaskV4@4
     displayName: "Terraform Apply"
@@ -52,4 +53,4 @@ steps:
       command: "apply"
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
-      commandOptions: "-auto-approve"
+      commandOptions: '-auto-approve -var="vault_addr=$(vault_addr)" -var="vault_token=$(vault_token)"'
