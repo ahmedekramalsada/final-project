@@ -45,6 +45,9 @@ steps:
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: '-var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'
+      env:
+        VAULT_ADDR: "http://$(vault-ip):8200"
+        VAULT_TOKEN: "$(vault-token)"
 
   # - task: TerraformTaskV4@4
   #   displayName: "Terraform Apply"
