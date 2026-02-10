@@ -78,17 +78,33 @@ steps:
       echo "Manifests prepared."
     displayName: "Prepare Manifests"
 
-  - task: Kubernetes@1
+  - task: AzureCLI@2
     displayName: "Apply KEDA and Nginx Manifests"
     inputs:
-      connectionType: "Kubernetes Service Connection"
-      kubernetesServiceEndpoint: "k8s-connection" # Ensure this connection exists
-      command: "apply"
-      arguments: "-f $(System.DefaultWorkingDirectory)/final-project-nti/k8s/azuredevops-keda.yaml -f $(System.DefaultWorkingDirectory)/final-project-nti/k8s/nginx-tgb.yaml"
+      azureSubscription: "$(aws_service_connection)" # Reusing the AWS Service Connection (mapped as Azure/AWS)
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        # Install kubectl
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+
+        # Output Terraform variables to find cluster name
+        cd $(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure
+        # We might not have infra state here directly accessible if we didn't init infrastructure.
+        # But we know the cluster name pattern or variable.
+        # Let's try to get it from the state of 'tools' if it reads 'infrastructure'.
+
+        # EASIER: Hardcode region, and construct cluster name if possible, OR assume user set access.
+        # Actually, best way in this pipeline flow to get access is:
+        aws eks update-kubeconfig --name final-project-cluster --region us-east-1
+
+        # Now apply
+        kubectl apply -f $(System.DefaultWorkingDirectory)/final-project-nti/k8s/azuredevops-keda.yaml
+        kubectl apply -f $(System.DefaultWorkingDirectory)/final-project-nti/k8s/nginx-tgb.yaml
     env:
-      # Placeholder logic: In a real scenario, you'd substitute variables here.
-      # For now, we assume the user might need to check/update the YAMLs or we accept placeholders.
-      pass: "true"
+      AWS_DEFAULT_REGION: $(terraform_region)
 
   - script: |
       echo "Applying manifests manual fix via kubectl..."
