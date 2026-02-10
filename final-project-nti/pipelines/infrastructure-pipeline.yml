@@ -4,7 +4,6 @@ trigger:
       - terraform/infrastructure/**
 
 pool:
-  name: self-hosted-k8s
   vmImage: "ubuntu-latest"
 
 variables:
