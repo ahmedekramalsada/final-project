@@ -129,27 +129,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   }
 }
 
-# --- TargetGroupBinding (Connects NGINX to Static Infra NLB) ---
-resource "kubernetes_manifest" "nginx_tgb" {
-  manifest = {
-    apiVersion = "elbv2.k8s.aws/v1beta1"
-    kind       = "TargetGroupBinding"
-    metadata = {
-      name      = "nginx-tgb"
-      namespace = "ingress-nginx"
-    }
-    spec = {
-      serviceRef = {
-        name = "nginx-ingress-nginx-controller" # Check exact service name from Helm chart
-        port = 80
-      }
-      targetGroupARN = data.terraform_remote_state.infrastructure.outputs.nlb_target_group_arn
-      targetType     = "ip"
-    }
-  }
 
-  depends_on = [helm_release.nginx, helm_release.aws_load_balancer_controller]
-}
 
 
 # --- Datadog Agent ---

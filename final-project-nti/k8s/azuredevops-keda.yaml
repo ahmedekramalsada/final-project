@@ -1,0 +1,45 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: azuredevops-trigger-auth
+  namespace: azuredevops-agents
+spec:
+  secretTargetRef:
+    - parameter: personalAccessToken
+      name: azuredevops-pat
+      key: personalAccessToken
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: azuredevops-agent-scaled-job
+  namespace: azuredevops-agents
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+          - name: azuredevops-agent
+            # Placeholder image - script will replace this with valid ECR/Nexus URL
+            image: REPLACEMENT_IMAGE_URL
+            env:
+              - name: AZP_URL
+                value: "https://dev.azure.com/aekram2"
+              - name: AZP_POOL
+                value: "self-hosted-k8s"
+              - name: AZP_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: azuredevops-pat
+                    key: personalAccessToken
+        restartPolicy: Never
+  pollingInterval: 30
+  maxReplicaCount: 10
+  triggers:
+    - type: azure-pipelines
+      metadata:
+        organizationUrl: "https://dev.azure.com/aekram2"
+        poolName: "self-hosted-k8s"
+        targetPipelinesQueueLength: "1"
+      authenticationRef:
+        name: azuredevops-trigger-auth
