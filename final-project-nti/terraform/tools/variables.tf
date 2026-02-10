@@ -76,3 +76,9 @@ variable "vault_token" {
   type        = string
   sensitive   = true
 }
+
+variable "azuredevops_agent_image" {
+  description = "Docker image for the Azure DevOps agent"
+  type        = string
+  default     = "mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
+}

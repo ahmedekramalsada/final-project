@@ -47,7 +47,7 @@ steps:
       command: "plan"
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
       environmentServiceNameAWS: "$(aws_service_connection)"
-      commandOptions: '-var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'
+      commandOptions: '-var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
 
   - task: TerraformTaskV4@4
     displayName: "Terraform Apply"
@@ -59,63 +59,4 @@ steps:
       command: "apply"
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
       environmentServiceNameAWS: "$(aws_service_connection)"
-      commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'
-
-  - script: |
-      echo "Preparing manifests with variable substitution..."
-      # Use Microsoft Agent Image as fallback
-      AGENT_IMAGE="mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
-
-      echo "Using Agent Image: $AGENT_IMAGE"
-
-      # Replace in K8s manifest
-      sed -i "s|REPLACEMENT_IMAGE_URL|$AGENT_IMAGE|g" $(System.DefaultWorkingDirectory)/final-project-nti/k8s/azuredevops-keda.yaml
-
-      # Attempt to replace NLB ARN if provided in environment, otherwise warns user
-      # For this demo/setup, we assume the manifest works or user edits it if ARN is strictly required.
-      # But we can try to leave the placeholder if we can't find it, or use a dummy.
-
-      echo "Manifests prepared."
-    displayName: "Prepare Manifests"
-
-  - task: KubectlInstaller@0
-    displayName: "Install Kubectl"
-    inputs:
-      kubectlVersion: "latest"
-
-  - task: AWSShellScript@1
-    displayName: "Apply KEDA and Nginx Manifests"
-    inputs:
-      awsCredentials: "$(aws_service_connection)"
-      regionName: "$(terraform_region)"
-      scriptType: "inline"
-      inlineScript: |
-        # kubectl is already installed by KubectlInstaller task
-
-        # Output Terraform variables to find cluster name
-        cd $(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure
-        # We might not have infra state here directly accessible if we didn't init infrastructure.
-        # But we know the cluster name pattern or variable.
-        # Let's try to get it from the state of 'tools' if it reads 'infrastructure'.
-
-        # EASIER: Hardcode region, and construct cluster name if possible, OR assume user set access.
-        # Actually, best way in this pipeline flow to get access is:
-        aws eks update-kubeconfig --name final-project-cluster --region us-east-1
-
-        # Now apply
-        kubectl apply -f $(System.DefaultWorkingDirectory)/final-project-nti/k8s/azuredevops-keda.yaml
-        kubectl apply -f $(System.DefaultWorkingDirectory)/final-project-nti/k8s/nginx-tgb.yaml
-    env:
-      AWS_DEFAULT_REGION: $(terraform_region)
-
-  - script: |
-      echo "Applying manifests manual fix via kubectl..."
-      # We need to replace REPLACEMENT_IMAGE_URL and TARGET_GROUP_ARN_PLACEHOLDER
-      # Fetch required outputs from terraform state or infrastructure
-
-      # For now, simple sed to minimally unblock if user hardcodes or vars are available
-      # sed -i "s|REPLACEMENT_IMAGE_URL|$(agent_image)|g" ...
-
-      # We will rely on the previous kubectl apply if files are ready, 
-      # OR we can assume the user needs to specific these values.
-    displayName: "Post-Apply Manifests"
+      commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'

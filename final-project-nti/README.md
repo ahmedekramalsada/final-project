@@ -99,10 +99,8 @@ This project uses a multi-layered networking approach to ensure high availabilit
     *Note: This requires the infrastructure to be applied first.*
 
 3.  **Deploy Application**:
-    *   Push changes to the repository to trigger the pipeline, or apply manifests manually via `kubectl` or ArgoCD.
-    *   **AWS Specific Tasks**:
-        *   Create an ECR repository.
-        *   Push Docker images to ECR.
+    *   **Cluster Tools & Platform**: All tooling (ArgoCD, KEDA, Nginx) and their specific Kubernetes resources (ScaledJobs, TargetGroupBindings) are managed through the **Platform Pipeline** using Terraform.
+    *   **Application Workload**: Push changes to the repository to trigger the application pipeline, which uses ArgoCD for GitOps deployment.
 
 ## Secret Management
 Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via **HashiCorp Vault** and referenced in Terraform.
