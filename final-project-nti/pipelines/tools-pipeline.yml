@@ -4,7 +4,7 @@ trigger:
       - terraform/tools/**
 
 # Ensure this runs AFTER Infrastructure Pipeline
-dependencies: [] # In a real scenario, you can't easily depend on another pipeline unless using YAML resources or triggers. For now, manual or path trigger.
+# dependencies: [] # In a real scenario, you can't easily depend on another pipeline unless using YAML resources or triggers. For now, manual or path trigger.
 
 pool:
   vmImage: "ubuntu-latest"
