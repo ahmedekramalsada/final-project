@@ -100,11 +100,12 @@ This project uses a multi-layered networking approach to ensure high availabilit
 
 3.  **Deploy Application**:
     *   Push changes to the repository to trigger the pipeline, or apply manifests manually via `kubectl` or ArgoCD.
+    *   **AWS Specific Tasks**:
+        *   Create an ECR repository.
+        *   Push Docker images to ECR.
 
 ## Secret Management
 Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via **HashiCorp Vault** and referenced in Terraform.
 
 ## Current Infrastructure Snapshot (as of Feb 2026)
-- **Active Compute**: 1x `t3.micro` EC2 in `us-east-1` (Azure DevOps Agent).
-- **Storage**: S3 bucket `backend-s3-final-project` for state management.
 - **Networking**: Default VPCs available in `us-east-1` and `eu-north-1`. All custom infrastructure cleaned up.

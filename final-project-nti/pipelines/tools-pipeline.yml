@@ -78,17 +78,19 @@ steps:
       echo "Manifests prepared."
     displayName: "Prepare Manifests"
 
-  - task: AzureCLI@2
+  - task: KubectlInstaller@0
+    displayName: "Install Kubectl"
+    inputs:
+      kubectlVersion: "latest"
+
+  - task: AWSShellScript@1
     displayName: "Apply KEDA and Nginx Manifests"
     inputs:
-      azureSubscription: "$(aws_service_connection)" # Reusing the AWS Service Connection (mapped as Azure/AWS)
-      scriptType: "bash"
-      scriptLocation: "inlineScript"
+      awsCredentials: "$(aws_service_connection)"
+      regionName: "$(terraform_region)"
+      scriptType: "inline"
       inlineScript: |
-        # Install kubectl
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        chmod +x kubectl
-        sudo mv kubectl /usr/local/bin/
+        # kubectl is already installed by KubectlInstaller task
 
         # Output Terraform variables to find cluster name
         cd $(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure
