@@ -99,8 +99,9 @@ This project uses a multi-layered networking approach to ensure high availabilit
     *Note: This requires the infrastructure to be applied first.*
 
 3.  **Deploy Application**:
-    *   **Cluster Tools & Platform**: All tooling (ArgoCD, KEDA, Nginx) and their specific Kubernetes resources (ScaledJobs, TargetGroupBindings) are managed through the **Platform Pipeline** using Terraform.
-    *   **Application Workload**: Push changes to the repository to trigger the application pipeline, which uses ArgoCD for GitOps deployment.
+    *   **Cluster Tools**: ArgoCD, KEDA, Nginx, and other platform tools are installed via Terraform Helm releases.
+    *   **Custom Manifests**: KEDA ScaledJobs and AWS Load Balancer bindings are applied via a script after Terraform completes.
+    *   **Application Workload**: Push changes to trigger the application pipeline, which uses ArgoCD for GitOps deployment.
 
 ## Secret Management
 Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via **HashiCorp Vault** and referenced in Terraform.
