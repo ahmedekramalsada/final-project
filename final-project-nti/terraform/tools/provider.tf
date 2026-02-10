@@ -27,3 +27,8 @@ provider "kubernetes" {
     args        = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.infrastructure.outputs.cluster_name, "--output", "json"]
   }
 }
+
+provider "vault" {
+  address = var.vault_addr
+  token   = var.vault_token
+}

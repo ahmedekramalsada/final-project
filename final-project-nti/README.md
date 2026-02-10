@@ -33,7 +33,9 @@ We adhere to a layered architecture to separate concerns:
     *   **VPC & Subnets**: Networking foundation.
     *   **EKS**: Kubernetes Cluster.
     *   **Cognito**: User Authentication.
-    *   **API Gateway**, **ECR**, **Agents**.
+    *   **API Gateway**, **Agents**.
+    *   **Nexus**: Application Artifact Repository (replacing ECR).
+    *   **Vault**: Secrets Management (replacing SSM).
 
 ### 2. Platform Pipeline (`pipelines/tools-pipeline.yml`)
 *   **Stage**: **Platform**
@@ -56,7 +58,7 @@ We adhere to a layered architecture to separate concerns:
         *   **Image Build**: Docker build.
         *   **Trivy Scan**: Container image security scan.
         *   **SAST**: SonarQube static analysis.
-        *   **Image Push**: Push to ECR.
+        *   **Image Push**: Push to Nexus.
     2.  **CD (Continuous Delivery)**:
         *   **ArgoCD**: Syncs changes to the cluster (GitOps).
 
@@ -100,7 +102,7 @@ This project uses a multi-layered networking approach to ensure high availabilit
     *   Push changes to the repository to trigger the pipeline, or apply manifests manually via `kubectl` or ArgoCD.
 
 ## Secret Management
-Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via AWS SSM Parameter Store and referenced in Terraform.
+Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via **HashiCorp Vault** and referenced in Terraform.
 
 ## Current Infrastructure Snapshot (as of Feb 2026)
 - **Active Compute**: 1x `t3.micro` EC2 in `us-east-1` (Azure DevOps Agent).

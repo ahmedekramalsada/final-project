@@ -72,7 +72,7 @@ resource "kubernetes_job" "agent_bootstrap" {
           }
           env {
             name  = "AZP_TOKEN"
-            value = data.aws_ssm_parameter.azuredevops_pat.value
+            value = data.vault_kv_secret_v2.azuredevops_pat.data["pat"]
           }
         }
         restart_policy = "Never"

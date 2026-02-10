@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: app
-          # Replace with your actual ECR image URL after build
-          image: 975049943907.dkr.ecr.us-east-1.amazonaws.com/final-project-app:latest
+          # Replace with your actual Nexus image URL after build
+          image: nexus.example.com/final-project-repo:latest
           ports:
             - containerPort: 3000
           env:

@@ -2,10 +2,10 @@ resource "kubernetes_namespace" "azuredevops_agents" {
   metadata { name = "azuredevops-agents" }
 }
 
-# 1. Fetch the PAT from SSM (Ensure you created this manually in AWS first)
-data "aws_ssm_parameter" "azuredevops_pat" {
-  name            = "/${var.project}/azuredevops-pat"
-  with_decryption = true
+# 1. Fetch the PAT from Vault (Ensure you created this manually in Vault first)
+data "vault_kv_secret_v2" "azuredevops_pat" {
+  mount = "kv"          # Adjust mount path if necessary (e.g., "secret")
+  name  = "azuredevops" # Adjust secret path
 }
 
 resource "kubernetes_secret" "azuredevops_pat" {
@@ -14,7 +14,7 @@ resource "kubernetes_secret" "azuredevops_pat" {
     namespace = kubernetes_namespace.azuredevops_agents.metadata[0].name
   }
   data = {
-    personalAccessToken = data.aws_ssm_parameter.azuredevops_pat.value
+    personalAccessToken = data.vault_kv_secret_v2.azuredevops_pat.data["pat"]
   }
   type = "Opaque"
 }

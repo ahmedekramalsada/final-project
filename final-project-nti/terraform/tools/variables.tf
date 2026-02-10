@@ -59,3 +59,14 @@ variable "azuredevops_pool_name" {
   type        = string
   default     = "self-hosted-k8s"
 }
+
+variable "vault_addr" {
+  description = "The URL of the Vault server"
+  type        = string
+}
+
+variable "vault_token" {
+  description = "The Vault token to authenticate with"
+  type        = string
+  sensitive   = true
+}
