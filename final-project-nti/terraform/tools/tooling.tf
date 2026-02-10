@@ -150,3 +150,57 @@ resource "kubernetes_manifest" "nginx_tgb" {
 
   depends_on = [helm_release.nginx, helm_release.aws_load_balancer_controller]
 }
+
+
+# --- Datadog Agent ---
+data "vault_kv_secret_v2" "datadog" {
+  count = var.enable_datadog ? 1 : 0
+  mount = "kv"
+  name  = "datadog"
+}
+
+resource "helm_release" "datadog" {
+  count = var.enable_datadog ? 1 : 0
+
+  name             = "datadog"
+  repository       = "https://helm.datadoghq.com"
+  chart            = "datadog"
+  version          = "3.19.1" # Validate latest version
+  namespace        = "datadog"
+  create_namespace = true
+
+  set {
+    name  = "datadog.apiKey"
+    value = data.vault_kv_secret_v2.datadog[0].data["api_key"]
+  }
+
+  set {
+    name  = "datadog.appKey"
+    value = data.vault_kv_secret_v2.datadog[0].data["app_key"]
+  }
+
+  set {
+    name  = "datadog.logs.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "datadog.logs.containerCollectAll"
+    value = "true"
+  }
+
+  set {
+    name  = "datadog.processAgent.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "clusterAgent.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "datadog.kubeStateMetricsEnabled"
+    value = "true"
+  }
+}

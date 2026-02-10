@@ -39,6 +39,13 @@ Used by the build agents.
 vault kv put kv/azuredevops pat="your_personal_access_token"
 ```
 
+### Datadog Credentials
+Used by the Datadog Agent to send metrics and logs.
+```bash
+# Replace with your actual Datadog keys
+vault kv put kv/datadog api_key="<YOUR_API_KEY>" app_key="<YOUR_APP_KEY>"
+```
+
 ## 3. Verification
 Check if secrets are added correctly:
 ```bash
@@ -46,4 +53,5 @@ vault kv get kv/nexus
 vault kv get kv/sonarqube
 vault kv get kv/app
 vault kv get kv/azuredevops
+vault kv get kv/datadog
 ```

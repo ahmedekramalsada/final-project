@@ -44,6 +44,12 @@ variable "argocd_chart_version" {
   default     = "5.53.0"
 }
 
+variable "enable_datadog" {
+  description = "Enable Datadog Agent deployment"
+  type        = bool
+  default     = true
+}
+
 #------------------------------------------------------------------------------
 # Azure DevOps Configuration
 #------------------------------------------------------------------------------
