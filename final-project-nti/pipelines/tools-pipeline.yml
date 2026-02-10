@@ -10,10 +10,16 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  terraform_backend_bucket: "backend-s3-final-project"
-  terraform_backend_key: "tools/terraform.tfstate"
-  terraform_region: "us-east-1"
-  aws_service_connection: "terraform" # Replace with your Actual Service Connection Name
+  - group: "vault token and ip" # <-- TODO: Replace with your actual Group Name
+  # Define your backend S3 bucket and key here
+  - name: terraform_backend_bucket
+    value: "backend-s3-final-project"
+  - name: terraform_backend_key
+    value: "eks/terraform.tfstate"
+  - name: terraform_region
+    value: "us-east-1"
+  - name: aws_service_connection
+    value: "terraform" # Replace with your Actual Service Connection Name
 
 steps:
   - task: TerraformInstaller@1
