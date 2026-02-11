@@ -44,6 +44,17 @@ resource "helm_release" "argocd" {
     value = "LoadBalancer"
   }
 
+  set {
+    name  = "server.service.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "server.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-type"
+    value = "nlb"
+  }
+
+
   depends_on = [helm_release.aws_load_balancer_controller]
 }
 

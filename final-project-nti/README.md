@@ -140,7 +140,7 @@ Once deployed, you can access your services at the following URLs:
 - **URL**: `http://devops-infrastructure-nlb-376cc05bb258ad7b.elb.us-east-1.amazonaws.com`
 
 ### ArgoCD
-- **URL**: `https://a4c49f8090ad44719b0aa93e79008953-335359194.us-east-1.elb.amazonaws.com`
+- **URL**: `https://k8s-argocd-argocdse-19610f88f9-23378c9179d84016.elb.us-east-1.amazonaws.com`
 - **User**: `admin`
 - **Password**: Run `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo`
 
