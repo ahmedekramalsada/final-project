@@ -94,17 +94,28 @@ This project uses a multi-layered networking approach to ensure high availabilit
     ```bash
     cd ../tools
     terraform init
+    
+    # 1. Create terraform.tfvars with your Vault credentials
+    # vault_addr = "http://..."
+    # vault_token = "hvs..."
+    
+    # 2. Import the existing IAM role (if it exists)
+    terraform import aws_iam_role.lb_controller devops-infrastructure-lb-controller-role
+    
+    # 3. Apply
     terraform apply
     ```
     *Note: This requires the infrastructure to be applied first.*
 
 3.  **Deploy Application**:
     *   **Cluster Tools**: ArgoCD, KEDA, Nginx, and other platform tools are installed via Terraform Helm releases.
-    *   **Custom Manifests**: KEDA ScaledJobs and AWS Load Balancer bindings are applied via a script after Terraform completes.
+    *   **AWS Load Balancer Controller**: Properly configured with IAM permissions to manage ELBs/NLBs.
     *   **Application Workload**: Push changes to trigger the application pipeline, which uses ArgoCD for GitOps deployment.
 
 ## Secret Management
-Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via **HashiCorp Vault** and referenced in Terraform.
+Sensitive values (e.g., Datadog API Key, Azure DevOps PAT) are managed via **HashiCorp Vault**. 
+The `tools` directory uses a `terraform.tfvars` file (gitignored) to store the Vault address and token for local execution.
 
-## Current Infrastructure Snapshot (as of Feb 2026)
-- **Networking**: Default VPCs available in `us-east-1` and `eu-north-1`. All custom infrastructure cleaned up.
+## Troubleshooting
+If you encounter `EntityAlreadyExists` for the LB controller role, ensure you have imported the existing role into your state:
+`terraform import aws_iam_role.lb_controller devops-infrastructure-lb-controller-role`

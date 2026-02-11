@@ -102,6 +102,12 @@ data "aws_iam_policy_document" "lb_controller_assume" {
   }
 }
 
+resource "aws_iam_policy" "lb_controller_policy" {
+  name        = "${var.project}-lb-controller-policy"
+  description = "IAM policy for AWS Load Balancer Controller"
+  policy      = file("${path.module}/iam_policy.json")
+}
+
 resource "aws_iam_role" "lb_controller" {
   name               = "${var.project}-lb-controller-role"
   assume_role_policy = data.aws_iam_policy_document.lb_controller_assume.json
@@ -109,7 +115,7 @@ resource "aws_iam_role" "lb_controller" {
 
 resource "aws_iam_role_policy_attachment" "lb_controller_attach" {
   role       = aws_iam_role.lb_controller.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLoadBalancerControllerIAMPolicy"
+  policy_arn = aws_iam_policy.lb_controller_policy.arn
 }
 
 resource "helm_release" "aws_load_balancer_controller" {
