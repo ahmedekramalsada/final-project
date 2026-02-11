@@ -15,7 +15,7 @@ variables:
   - name: terraform_backend_bucket
     value: "backend-s3-final-project"
   - name: terraform_backend_key
-    value: "eks/terraform.tfstate"
+    value: "tools/terraform.tfstate"
   - name: terraform_region
     value: "us-east-1"
   - name: aws_service_connection
