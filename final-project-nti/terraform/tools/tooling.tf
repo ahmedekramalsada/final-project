@@ -25,6 +25,7 @@ resource "helm_release" "nginx" {
     value = "true"
   }
 
+  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 # ArgoCD for GitOps-based continuous deployment
@@ -43,6 +44,7 @@ resource "helm_release" "argocd" {
     value = "LoadBalancer"
   }
 
+  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 

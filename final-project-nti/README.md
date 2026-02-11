@@ -129,3 +129,5 @@ If you encounter `Client.Timeout` or `context deadline exceeded` errors during `
 If terraform destroy gets stuck on a subnet (e.g. `module.vpc.aws_subnet.private[0]`):
 1. Verify the subnet is already deleted in AWS console or CLI.
 2. Run `terraform state rm 'module.vpc.aws_subnet.private[0]'` to remove it from state.
+
+To prevent `Error: unable to build kubernetes objects` due to race conditions, ensure your `helm_release` resources (like nginx, argocd) have `depends_on = [helm_release.aws_load_balancer_controller]`.
