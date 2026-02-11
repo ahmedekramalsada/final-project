@@ -133,7 +133,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
 
 # --- Datadog Agent ---
-ephemeral "vault_kv_secret_v2" "datadog" {
+data "vault_kv_secret_v2" "datadog" {
   count = var.enable_datadog ? 1 : 0
   mount = "kv"
   name  = "datadog"
@@ -151,12 +151,12 @@ resource "helm_release" "datadog" {
 
   set {
     name  = "datadog.apiKey"
-    value = ephemeral.vault_kv_secret_v2.datadog[0].data["api_key"]
+    value = data.vault_kv_secret_v2.datadog[0].data["api_key"]
   }
 
   set {
     name  = "datadog.appKey"
-    value = ephemeral.vault_kv_secret_v2.datadog[0].data["app_key"]
+    value = data.vault_kv_secret_v2.datadog[0].data["app_key"]
   }
 
   set {
