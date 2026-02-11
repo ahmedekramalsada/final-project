@@ -51,7 +51,7 @@ steps:
   - task: AWSShellScript@1
     displayName: "K8s Deployment Logic"
     inputs:
-      awsServiceConnection: "$(aws_service_connection)"
+      awsServiceConnection: "$(terraform)"
       regionName: "$(terraform_region)"
       scriptType: "inline"
       inlineScript: |
