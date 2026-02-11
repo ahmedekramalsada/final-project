@@ -121,3 +121,7 @@ If you encounter `EntityAlreadyExists` for the LB controller role, ensure you ha
 `terraform import aws_iam_role.lb_controller devops-infrastructure-lb-controller-role`
 
 If you encounter `Unsupported attribute` errors in `tools` regarding `oidc_provider_arn`, it means your infrastructure state is incomplete. Run `terraform apply` in `terraform/infrastructure` to fix it.
+
+If you encounter `Client.Timeout` or `context deadline exceeded` errors during `tools` application:
+1. Run `aws eks update-kubeconfig --name devops-cluster --region us-east-1`
+2. Run `terraform refresh` in `terraform/tools` to update the state with the correct cluster endpoint.
