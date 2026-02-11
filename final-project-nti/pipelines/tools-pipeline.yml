@@ -52,33 +52,34 @@ steps:
       commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
 
   # FIX: Use AWS Shell Script task so kubectl actually has AWS permissions
-  - task: AWSShellScript@1
+ # Use AWSCLI@1 because it supports the AWSServiceEndpoint type
+  - task: AWSCLI@1
     displayName: "Configure Kubeconfig and Apply Manifests"
     inputs:
-      awsCredentials: "$(aws_service_connection)"
+      awsServiceConnection: "$(aws_service_connection)"
       regionName: "$(terraform_region)"
-      scriptType: 'inline'
-      inlineScript: |
-        # 1. Get Cluster Access
-        aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
-        
-        # 2. Process manifests
-        sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
-        
-        # 3. Get Terraform Output (Careful with paths here!)
-        cd terraform/infrastructure
-        TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn || echo "")
-        cd ../..
-        
-        if [ -n "$TARGET_GROUP_ARN" ]; then
-          sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
-        fi
-        
-        # 4. Apply to K8s
-        kubectl apply -f k8s/azuredevops-keda.yaml
-        kubectl apply -f k8s/nginx-tgb.yaml
-      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
+      awsCommand: 'eks'
+      awsSubCommand: 'update-kubeconfig'
+      addArguments: '--name final-project-cluster --region $(terraform_region)'
 
+  - script: |
+      # 1. Process manifests
+      sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
+      
+      # 2. Get Terraform Output
+      cd terraform/infrastructure
+      TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn || echo "")
+      cd ../..
+      
+      if [ -n "$TARGET_GROUP_ARN" ]; then
+        sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
+      fi
+      
+      # 3. Apply to K8s
+      kubectl apply -f k8s/azuredevops-keda.yaml
+      kubectl apply -f k8s/nginx-tgb.yaml
+    displayName: "Apply Kubernetes Manifests"
+    workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
 
 # =============================================================================
 # DESTROY SECTION: Uncomment the steps below and comment out the "Apply" steps 
