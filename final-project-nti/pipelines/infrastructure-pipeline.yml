@@ -67,7 +67,6 @@ steps:
   # --- New Destroy Option Added Below ---
   - task: TerraformTaskV4@4
     displayName: "Terraform Destroy"
-    condition: eq(variables['DestroyInfra'], 'true')
     env:
       VAULT_ADDR: "http://$(vault-ip):8200"
       VAULT_TOKEN: "$(vault-token)"
