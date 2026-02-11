@@ -89,3 +89,29 @@ steps:
         kubectl apply -f k8s/azuredevops-keda.yaml
         kubectl apply -f k8s/nginx-tgb.yaml
     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
+
+# =============================================================================
+# DESTROY SECTION (Commented out for future use)
+# =============================================================================
+#  - task: AWSCLI@1
+#    displayName: "Destroy K8s & Infrastructure"
+#    inputs:
+#      awsServiceConnection: "$(aws_service_connection)"
+#      regionName: "$(terraform_region)"
+#      scriptType: 'bash'
+#      scriptLocation: 'inlineScript'
+#      inlineScript: |
+#        aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
+#        kubectl delete -f k8s/nginx-tgb.yaml --ignore-not-found
+#        kubectl delete -f k8s/azuredevops-keda.yaml --ignore-not-found
+#        
+#        cd terraform/tools
+#        terraform init \
+#          -backend-config="bucket=$(terraform_backend_bucket)" \
+#          -backend-config="key=$(terraform_backend_key)" \
+#          -backend-config="region=$(terraform_region)"
+#        terraform destroy -auto-approve \
+#          -var="vault_addr=http://$(vault-ip):8200" \
+#          -var="vault_token=$(vault-token)" \
+#          -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
+#      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
