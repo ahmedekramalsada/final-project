@@ -51,67 +51,39 @@ steps:
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
 
-  - task: AWSCLI@1
-    displayName: "Setup Kubeconfig & Apply K8s Manifests"
+  - task: AWSShellScript@1
+    displayName: "Update Kubeconfig & Deploy"
     inputs:
       awsServiceConnection: "$(aws_service_connection)"
       regionName: "$(terraform_region)"
-      scriptType: "bash"
-      scriptLocation: "inlineScript"
+      scriptType: "inline"
       inlineScript: |
-        set -e 
+        set -e
 
-        # 1. Update Kubeconfig
-        aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
+        # Go to working directory
+        cd $(System.DefaultWorkingDirectory)/final-project-nti
 
-        # 2. Process manifests
+        # A. Update Kubeconfig
+        aws eks update-kubeconfig --region $(terraform_region) --name final-project-cluster
+
+        # B. Process Manifests (Sed)
         sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
 
-        # 3. Get Terraform Output (Infrastructure)
-        # Verify infrastructure state key is correct: infra/terraform.tfstate
+        # C. Get Terraform Outputs
         cd terraform/infrastructure
         terraform init \
           -backend-config="bucket=$(terraform_backend_bucket)" \
-          -backend-config="key=infra/terraform.tfstate" \
+          -backend-config="key=infrastructure/terraform.tfstate" \
           -backend-config="region=$(terraform_region)"
 
-        TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn || echo "")
+        TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn)
         cd ../..
 
         if [ -n "$TARGET_GROUP_ARN" ]; then
           echo "Found Target Group: $TARGET_GROUP_ARN"
           sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
-        else
-          echo "Warning: No Target Group ARN found. Skipping replacement."
         fi
 
-        # 4. Apply to K8s
+        # D. Apply to K8s
         kubectl apply -f k8s/azuredevops-keda.yaml
         kubectl apply -f k8s/nginx-tgb.yaml
-    workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
-
-# =============================================================================
-# DESTROY SECTION (Commented out for future use)
-# =============================================================================
-#  - task: AWSCLI@1
-#    displayName: "Destroy K8s & Infrastructure"
-#    inputs:
-#      awsServiceConnection: "$(aws_service_connection)"
-#      regionName: "$(terraform_region)"
-#      scriptType: 'bash'
-#      scriptLocation: 'inlineScript'
-#      inlineScript: |
-#        aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
-#        kubectl delete -f k8s/nginx-tgb.yaml --ignore-not-found
-#        kubectl delete -f k8s/azuredevops-keda.yaml --ignore-not-found
-#        
-#        cd terraform/tools
-#        terraform init \
-#          -backend-config="bucket=$(terraform_backend_bucket)" \
-#          -backend-config="key=$(terraform_backend_key)" \
-#          -backend-config="region=$(terraform_region)"
-#        terraform destroy -auto-approve \
-#          -var="vault_addr=http://$(vault-ip):8200" \
-#          -var="vault_token=$(vault-token)" \
-#          -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
-#      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
