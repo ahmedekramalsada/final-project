@@ -51,7 +51,7 @@ resource "helm_release" "argocd" {
 # --- SonarQube (Code Quality Scanner) ---
 resource "helm_release" "sonarqube" {
   name             = "sonarqube"
-  repository       = "https://SonarSource.github.io/helm-charts-sonarqube"
+  repository       = "https://sonarsource.github.io/helm-chart-sonarqube"
   chart            = "sonarqube"
   namespace        = "tooling"
   create_namespace = true
