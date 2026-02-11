@@ -74,15 +74,15 @@ steps:
     displayName: "Apply Kubernetes Manifests"
     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
 
-  # --- New Destroy Option Added Below ---
-  - task: TerraformTaskV4@4
-    displayName: "Terraform Destroy"
-    env:
-      VAULT_ADDR: "http://$(vault-ip):8200"
-      VAULT_TOKEN: "$(vault-token)"
-    inputs:
-      provider: "aws"
-      command: "destroy"
-      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
-      environmentServiceNameAWS: "$(aws_service_connection)"
-      commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
+  # # --- New Destroy Option Added Below ---
+  # - task: TerraformTaskV4@4
+  #   displayName: "Terraform Destroy"
+  #   env:
+  #     VAULT_ADDR: "http://$(vault-ip):8200"
+  #     VAULT_TOKEN: "$(vault-token)"
+  #   inputs:
+  #     provider: "aws"
+  #     command: "destroy"
+  #     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+  #     environmentServiceNameAWS: "$(aws_service_connection)"
+  #     commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
