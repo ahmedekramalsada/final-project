@@ -10,13 +10,16 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  nexus_service_connection: "nexus-connection" # Ensure this Service Connection exists in Azure DevOps
-  nexus_repository_name: "final-project-repo" # Match your Nexus repository name
+  # Make sure these are defined in a Variable Group or Secret variables
+  nexus_service_connection: "nexus-connection"
+  nexus_repository_name: "final-project-repo"
+  nexus_url: "your-nexus-url.com" # ADD THIS VARIABLE
   image_tag: "$(Build.BuildId)"
   sonarqube_connection: "SonarQube-Connection"
 
 steps:
-  - task: SonarQubePrepare@5
+  # FIX: Use @6 instead of @5 if @5 is not found
+  - task: SonarQubePrepare@6
     displayName: "Prepare SonarQube Analysis"
     inputs:
       SonarQube: "$(sonarqube_connection)"
@@ -26,10 +29,10 @@ steps:
       cliProjectName: "Final Project App"
       cliSources: "final-project-nti"
 
-  - task: SonarQubeAnalyze@5
+  - task: SonarQubeAnalyze@6
     displayName: "Run SonarQube Analysis"
 
-  - task: SonarQubePublish@5
+  - task: SonarQubePublish@6
     displayName: "Publish Quality Gate Result"
     inputs:
       pollingTimeoutSec: "300"
@@ -41,25 +44,25 @@ steps:
       repository: "$(nexus_repository_name)"
       command: "buildAndPush"
       Dockerfile: "final-project-nti/app/Dockerfile"
+      buildContext: "final-project-nti/app" # Explicit context is safer
       tags: |
         $(image_tag)
         latest
 
   - script: |
-      # Install Trivy
-      sudo apt-get install wget apt-transport-https gnupg lsb-release
+      # 1. Install Trivy
+      sudo apt-get install wget apt-transport-https gnupg lsb-release -y
       wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
       echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
       sudo apt-get update
-      sudo apt-get install trivy
+      sudo apt-get install trivy -y
 
-      # Run Trivy Scan
-      # Assuming the agent allows insecure registry or Nexus has valid certs.
+      # 2. Run Trivy Scan (Note the TRIVY_ specific env vars)
+      export TRIVY_USERNAME=$(NEXUS_USERNAME)
+      export TRIVY_PASSWORD=$(NEXUS_PASSWORD)
+
       trivy image --exit-code 0 --severity MEDIUM,HIGH,CRITICAL $(nexus_url)/$(nexus_repository_name):$(image_tag)
     displayName: "Trivy Container Image Scan"
-    env:
-      NEXUS_USERNAME: $(NEXUS_USERNAME) # Ensure these env vars are available
-      NEXUS_PASSWORD: $(NEXUS_PASSWORD)
 
   - task: PublishBuildArtifacts@1
     displayName: "Publish Artifacts (Manifests)"
@@ -67,11 +70,8 @@ steps:
       PathtoPublish: "final-project-nti/k8s"
       ArtifactName: "manifests"
 
-  # Optional: Add a step to update GitOps repo if using Argocd-image-updater or separate repo
-  # For now, we assume ArgoCD watches this repo or image updater handles it.
-  # If you need to manually update a value in a file:
   - script: |
       echo "Updating k8s deployment with new tag $(image_tag)..."
+      # Using a different separator '|' in sed because the URL contains '/'
       sed -i "s|image: .*|image: $(nexus_url)/$(nexus_repository_name):$(image_tag)|g" final-project-nti/k8s/deployment.yaml
-      # In a real GitOps flow, you would git commit and push this change back to the repo.
     displayName: "Update Manifests (Placeholder)"
