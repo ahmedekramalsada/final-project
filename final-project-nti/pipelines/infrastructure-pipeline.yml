@@ -64,3 +64,9 @@ steps:
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'
+
+  - task: TerraformTask@5
+    inputs:
+      provider: 'aws'
+      command: 'destroy'
+      environmentServiceNameAWS: 'terraform'
