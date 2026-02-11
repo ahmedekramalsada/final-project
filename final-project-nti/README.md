@@ -131,3 +131,20 @@ If terraform destroy gets stuck on a subnet (e.g. `module.vpc.aws_subnet.private
 2. Run `terraform state rm 'module.vpc.aws_subnet.private[0]'` to remove it from state.
 
 To prevent `Error: unable to build kubernetes objects` due to race conditions, ensure your `helm_release` resources (like nginx, argocd) have `depends_on = [helm_release.aws_load_balancer_controller]`.
+
+## Accessing Your Deployment
+
+Once deployed, you can access your services at the following URLs:
+
+### Application Access (Nginx Ingress)
+- **URL**: `http://devops-infrastructure-nlb-376cc05bb258ad7b.elb.us-east-1.amazonaws.com`
+
+### ArgoCD
+- **URL**: `https://a4c49f8090ad44719b0aa93e79008953-335359194.us-east-1.elb.amazonaws.com`
+- **User**: `admin`
+- **Password**: Run `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo`
+
+### SonarQube
+- **URL**: `http://a1671338e0d8c48d3bca59ae1ab72439-592356805.us-east-1.elb.amazonaws.com:9000`
+- **User**: `admin`
+- **Password**: `admin` (Change on first login)
