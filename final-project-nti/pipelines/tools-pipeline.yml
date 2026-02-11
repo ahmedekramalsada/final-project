@@ -3,7 +3,6 @@ trigger:
     include:
       - terraform/tools/**
 
-# Ensure this runs AFTER Infrastructure Pipeline
 pool:
   vmImage: "ubuntu-latest"
 
@@ -36,9 +35,6 @@ steps:
 
   - task: TerraformTaskV4@4
     displayName: "Terraform Plan"
-    env:
-      VAULT_ADDR: "http://$(vault-ip):8200"
-      VAULT_TOKEN: "$(vault-token)"
     inputs:
       provider: "aws"
       command: "plan"
@@ -48,9 +44,6 @@ steps:
 
   - task: TerraformTaskV4@4
     displayName: "Terraform Apply"
-    env:
-      VAULT_ADDR: "http://$(vault-ip):8200"
-      VAULT_TOKEN: "$(vault-token)"
     inputs:
       provider: "aws"
       command: "apply"
@@ -58,31 +51,59 @@ steps:
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
 
-  # Apply Kubernetes manifests after Terraform installs KEDA and AWS LB Controller
-  - script: |
-      aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
-      sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
-      cd terraform/infrastructure
-      TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn || echo "")
-      cd ../..
-      if [ -n "$TARGET_GROUP_ARN" ]; then
-        sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
-      fi
-      kubectl apply -f k8s/azuredevops-keda.yaml
-      kubectl apply -f k8s/nginx-tgb.yaml
-      echo "Manifests applied successfully!"
-    displayName: "Apply Kubernetes Manifests"
-    workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
+  # FIX: Use AWS Shell Script task so kubectl actually has AWS permissions
+  - task: AWSShellScript@1
+    displayName: "Configure Kubeconfig and Apply Manifests"
+    inputs:
+      awsCredentials: "$(aws_service_connection)"
+      regionName: "$(terraform_region)"
+      scriptType: 'inline'
+      inlineScript: |
+        # 1. Get Cluster Access
+        aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
+        
+        # 2. Process manifests
+        sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
+        
+        # 3. Get Terraform Output (Careful with paths here!)
+        cd terraform/infrastructure
+        TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn || echo "")
+        cd ../..
+        
+        if [ -n "$TARGET_GROUP_ARN" ]; then
+          sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
+        fi
+        
+        # 4. Apply to K8s
+        kubectl apply -f k8s/azuredevops-keda.yaml
+        kubectl apply -f k8s/nginx-tgb.yaml
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
 
-  # # --- New Destroy Option Added Below ---
-  # - task: TerraformTaskV4@4
-  #   displayName: "Terraform Destroy"
-  #   env:
-  #     VAULT_ADDR: "http://$(vault-ip):8200"
-  #     VAULT_TOKEN: "$(vault-token)"
-  #   inputs:
-  #     provider: "aws"
-  #     command: "destroy"
-  #     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
-  #     environmentServiceNameAWS: "$(aws_service_connection)"
-  #     commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
+
+# =============================================================================
+# DESTROY SECTION: Uncomment the steps below and comment out the "Apply" steps 
+# when you want to tear down the environment.
+# =============================================================================
+
+#  # 1. Remove K8s Manifests first while the cluster is still active
+#  - task: AWSShellScript@1
+#    displayName: "Delete Kubernetes Manifests"
+#    inputs:
+#      awsCredentials: "$(aws_service_connection)"
+#      regionName: "$(terraform_region)"
+#      scriptType: 'inline'
+#      inlineScript: |
+#        aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
+#        kubectl delete -f k8s/nginx-tgb.yaml --ignore-not-found
+#        kubectl delete -f k8s/azuredevops-keda.yaml --ignore-not-found
+#      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
+
+#  # 2. Terraform Destroy
+#  - task: TerraformTaskV4@4
+#    displayName: "Terraform Destroy"
+#    inputs:
+#      provider: "aws"
+#      command: "destroy"
+#      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+#      environmentServiceNameAWS: "$(aws_service_connection)"
+#      commandOptions: '-var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
