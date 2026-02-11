@@ -66,6 +66,11 @@ resource "helm_release" "sonarqube" {
     value = "admin123" # Change this to a secure value
   }
 
+  set {
+    name  = "community.enabled"
+    value = "true"
+  }
+
   # SonarQube requires significant memory; t3.medium is the minimum
   set {
     name  = "resources.requests.memory"
