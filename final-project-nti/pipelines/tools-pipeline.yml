@@ -4,14 +4,11 @@ trigger:
       - terraform/tools/**
 
 # Ensure this runs AFTER Infrastructure Pipeline
-# dependencies: [] # In a real scenario, you can't easily depend on another pipeline unless using YAML resources or triggers. For now, manual or path trigger.
-
 pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  - group: "vault token and ip" # <-- TODO: Replace with your actual Group Name
-  # Define your backend S3 bucket and key here
+  - group: "vault token and ip" 
   - name: terraform_backend_bucket
     value: "backend-s3-final-project"
   - name: terraform_backend_key
@@ -19,7 +16,7 @@ variables:
   - name: terraform_region
     value: "us-east-1"
   - name: aws_service_connection
-    value: "terraform" # Replace with your Actual Service Connection Name
+    value: "terraform" 
 
 steps:
   - task: TerraformInstaller@1
@@ -63,25 +60,29 @@ steps:
 
   # Apply Kubernetes manifests after Terraform installs KEDA and AWS LB Controller
   - script: |
-      # Configure kubectl using AWS CLI (already authenticated by Terraform task)
       aws eks update-kubeconfig --name final-project-cluster --region $(terraform_region)
-
-      # Replace placeholders in manifests
       sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
-
-      # Get the NLB Target Group ARN from Terraform outputs
       cd terraform/infrastructure
       TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn || echo "")
       cd ../..
-
       if [ -n "$TARGET_GROUP_ARN" ]; then
         sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
       fi
-
-      # Apply the manifests (KEDA and LB Controller CRDs are now installed)
       kubectl apply -f k8s/azuredevops-keda.yaml
       kubectl apply -f k8s/nginx-tgb.yaml
-
       echo "Manifests applied successfully!"
     displayName: "Apply Kubernetes Manifests"
     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
+
+  # --- New Destroy Option Added Below ---
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Destroy"
+    env:
+      VAULT_ADDR: "http://$(vault-ip):8200"
+      VAULT_TOKEN: "$(vault-token)"
+    inputs:
+      provider: "aws"
+      command: "destroy"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+      environmentServiceNameAWS: "$(aws_service_connection)"
+      commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
