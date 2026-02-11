@@ -51,28 +51,34 @@ steps:
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)" -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"'
 
-  # FIX: Use AWS Shell Script task so kubectl actually has AWS permissions
- # Use AWSCLI@1 because it supports the AWSServiceEndpoint type
   - task: AWSCLI@1
-    displayName: "Configure Kubeconfig and Apply Manifests"
+    displayName: "Configure Kubeconfig"
     inputs:
       awsServiceConnection: "$(aws_service_connection)"
       regionName: "$(terraform_region)"
       awsCommand: 'eks'
       awsSubCommand: 'update-kubeconfig'
-      addArguments: '--name final-project-cluster --region $(terraform_region)'
+      # Remove the --region here if it's already defined in the regionName input above
+      addArguments: '--name final-project-cluster'
 
   - script: |
       # 1. Process manifests
       sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
       
       # 2. Get Terraform Output
+      # We need to be in the directory where the 'infrastructure' state is
       cd terraform/infrastructure
+      
+      # IMPORTANT: If infrastructure was deployed in a different pipeline, 
+      # you might need to run 'terraform init' here too, or use a variable.
       TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn || echo "")
       cd ../..
       
       if [ -n "$TARGET_GROUP_ARN" ]; then
+        echo "Found Target Group: $TARGET_GROUP_ARN"
         sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
+      else
+        echo "Warning: TARGET_GROUP_ARN not found!"
       fi
       
       # 3. Apply to K8s
@@ -80,7 +86,6 @@ steps:
       kubectl apply -f k8s/nginx-tgb.yaml
     displayName: "Apply Kubernetes Manifests"
     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
-
 # =============================================================================
 # DESTROY SECTION: Uncomment the steps below and comment out the "Apply" steps 
 # when you want to tear down the environment.
