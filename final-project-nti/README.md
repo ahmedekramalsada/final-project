@@ -119,3 +119,5 @@ The `tools` directory uses a `terraform.tfvars` file (gitignored) to store the V
 ## Troubleshooting
 If you encounter `EntityAlreadyExists` for the LB controller role, ensure you have imported the existing role into your state:
 `terraform import aws_iam_role.lb_controller devops-infrastructure-lb-controller-role`
+
+If you encounter `Unsupported attribute` errors in `tools` regarding `oidc_provider_arn`, it means your infrastructure state is incomplete. Run `terraform apply` in `terraform/infrastructure` to fix it.
