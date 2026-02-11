@@ -61,6 +61,11 @@ resource "helm_release" "sonarqube" {
     value = "LoadBalancer"
   }
 
+  set {
+    name  = "monitoringPasscode"
+    value = "admin123" # Change this to a secure value
+  }
+
   # SonarQube requires significant memory; t3.medium is the minimum
   set {
     name  = "resources.requests.memory"
