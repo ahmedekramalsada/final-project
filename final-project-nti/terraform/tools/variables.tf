@@ -69,6 +69,7 @@ variable "azuredevops_pool_name" {
 variable "vault_addr" {
   description = "The URL of the Vault server"
   type        = string
+  default     = "http://18.215.161.128:8200"
 }
 
 variable "vault_token" {
