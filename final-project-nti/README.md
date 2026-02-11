@@ -125,3 +125,7 @@ If you encounter `Unsupported attribute` errors in `tools` regarding `oidc_provi
 If you encounter `Client.Timeout` or `context deadline exceeded` errors during `tools` application:
 1. Run `aws eks update-kubeconfig --name devops-cluster --region us-east-1`
 2. Run `terraform refresh` in `terraform/tools` to update the state with the correct cluster endpoint.
+
+If terraform destroy gets stuck on a subnet (e.g. `module.vpc.aws_subnet.private[0]`):
+1. Verify the subnet is already deleted in AWS console or CLI.
+2. Run `terraform state rm 'module.vpc.aws_subnet.private[0]'` to remove it from state.
