@@ -49,40 +49,32 @@ steps:
 
   # 2. Extract Infrastructure Info & Deploy K8s
   - task: AWSShellScript@1
-    displayName: "K8s Deployment Logic"
+    displayName: "Update Kubeconfig & K8s Apply"
     inputs:
-      awsServiceConnection: "$(awsCredentials)"
+      awsCredentials: "$(aws_service_connection)"
       regionName: "$(terraform_region)"
       scriptType: "inline"
       inlineScript: |
         set -e
 
-        # Update Kubeconfig
-        aws eks update-kubeconfig --region $(terraform_region) --name final-project-cluster
+        # 1. Update Kubeconfig
+        aws eks update-kubeconfig --region $(terraform_region) --name devops-cluster
 
-        # Get the Target Group ARN from the OTHER state file
-        # We use AWS CLI or Terraform to fetch this
+        # 2. Get Target Group ARN from the other state
         cd $(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure
 
         terraform init \
           -backend-config="bucket=$(terraform_backend_bucket)" \
-          -backend-config="key=infrastructure/terraform.tfstate" \
+          -backend-config="key=infra/terraform.tfstate" \
           -backend-config="region=$(terraform_region)"
 
         TARGET_GROUP_ARN=$(terraform output -raw nlb_target_group_arn)
 
-        cd ../../ # Back to project root
+        cd ../../
 
-        # Replace Placeholders in K8s Manifests
+        # 3. Replace and Apply
         sed -i "s|REPLACEMENT_IMAGE_URL|mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04|g" k8s/azuredevops-keda.yaml
-
-        if [ -z "$TARGET_GROUP_ARN" ]; then
-          echo "Error: TARGET_GROUP_ARN is empty. Check your infrastructure state."
-          exit 1
-        fi
-
         sed -i "s|TARGET_GROUP_ARN_PLACEHOLDER|$TARGET_GROUP_ARN|g" k8s/nginx-tgb.yaml
 
-        # Deploy to EKS
         kubectl apply -f k8s/azuredevops-keda.yaml
         kubectl apply -f k8s/nginx-tgb.yaml
