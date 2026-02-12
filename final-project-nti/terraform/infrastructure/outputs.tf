@@ -18,15 +18,13 @@ output "cluster_name" {
   value       = module.eks.cluster_name
 }
 
-
-
 output "cluster_certificate_authority_data" {
   description = "Base64 encoded certificate data required to communicate with the cluster"
   value       = module.eks.cluster_certificate_authority_data
 }
 
 output "cluster_id" {
-  description = "The name/id of the EKS cluster. Will block on cluster creation until the cluster is really ready"
+  description = "The name/id of the EKS cluster"
   value       = module.eks.cluster_id
 }
 
@@ -40,9 +38,14 @@ output "nlb_target_group_arn" {
   value       = aws_lb_target_group.ingress_nginx.arn
 }
 
+output "nlb_dns_name" {
+  description = "DNS name of the Network Load Balancer"
+  value       = aws_lb.ingress_nlb.dns_name
+}
+
 output "api_gateway_endpoint" {
-  description = "The endpoint of the API Gateway"
-  value       = aws_apigatewayv2_api.main.api_endpoint
+  description = "The invoke URL of the API Gateway (single entry point)"
+  value       = aws_apigatewayv2_stage.default.invoke_url
 }
 
 output "cognito_user_pool_id" {
@@ -53,4 +56,9 @@ output "cognito_user_pool_id" {
 output "cognito_client_id" {
   description = "The ID of the Cognito User Pool Client"
   value       = aws_cognito_user_pool_client.client.id
+}
+
+output "cognito_domain" {
+  description = "The Cognito hosted UI domain"
+  value       = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${var.aws_region}.amazoncognito.com"
 }

@@ -28,6 +28,7 @@ resource "helm_release" "nginx" {
 }
 
 # ArgoCD for GitOps-based continuous deployment
+# Service type: ClusterIP — accessed via Ingress → NLB → API Gateway
 resource "helm_release" "argocd" {
   count = var.enable_argocd ? 1 : 0
 
@@ -38,19 +39,27 @@ resource "helm_release" "argocd" {
   create_namespace = true
   version          = var.argocd_chart_version
 
+  # ClusterIP only — routed through Ingress
   set {
     name  = "server.service.type"
-    value = "LoadBalancer"
+    value = "ClusterIP"
   }
 
+  # Run insecure (no TLS termination at ArgoCD — NLB/Ingress handles it)
   set {
-    name  = "server.service.enabled"
+    name  = "server.insecure"
     value = "true"
   }
 
+  # Set the base URL path for ArgoCD behind reverse proxy
   set {
-    name  = "server.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-    value = "internet-facing"
+    name  = "server.basehref"
+    value = "/argocd"
+  }
+
+  set {
+    name  = "server.rootpath"
+    value = "/argocd"
   }
 
   depends_on = [helm_release.aws_load_balancer_controller]
@@ -58,6 +67,7 @@ resource "helm_release" "argocd" {
 
 
 # --- SonarQube (Code Quality Scanner) ---
+# Service type: ClusterIP — accessed via Ingress → NLB → API Gateway
 resource "helm_release" "sonarqube" {
   count = var.enable_sonarqube ? 1 : 0
 
@@ -69,7 +79,13 @@ resource "helm_release" "sonarqube" {
 
   set {
     name  = "service.type"
-    value = "LoadBalancer"
+    value = "ClusterIP"
+  }
+
+  # Set context path for SonarQube behind reverse proxy
+  set {
+    name  = "sonarProperties.sonar\\.web\\.context"
+    value = "/sonarqube"
   }
 
   set {
@@ -171,7 +187,7 @@ resource "helm_release" "datadog" {
   name             = "datadog"
   repository       = "https://helm.datadoghq.com"
   chart            = "datadog"
-  version          = "3.19.1" # Validate latest version
+  version          = "3.19.1"
   namespace        = "datadog"
   create_namespace = true
 

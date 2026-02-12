@@ -17,6 +17,15 @@ variables:
   - name: aws_service_connection
     value: "terraform"
 
+parameters:
+  - name: action
+    displayName: "Terraform Action"
+    type: string
+    default: "apply"
+    values:
+      - apply
+      - destroy
+
 steps:
   - task: TerraformInstaller@1
     inputs:
@@ -40,39 +49,20 @@ steps:
       command: "validate"
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
 
-  # - task: TerraformTaskV4@4
-  #   displayName: "Terraform Plan"
-  #   env:
-  #     VAULT_ADDR: "http://$(vault-ip):8200"
-  #     VAULT_TOKEN: "$(vault-token)"
-  #   inputs:
-  #     provider: "aws"
-  #     command: "plan"
-  #     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
-  #     environmentServiceNameAWS: "$(aws_service_connection)"
-  #     commandOptions: '-var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'
-
-  # - task: TerraformTaskV4@4
-  #   displayName: "Terraform Apply"
-  #   env:
-  #     VAULT_ADDR: "http://$(vault-ip):8200"
-  #     VAULT_TOKEN: "$(vault-token)"
-  #   inputs:
-  #     provider: "aws"
-  #     command: "apply"
-  #     workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
-  #     environmentServiceNameAWS: "$(aws_service_connection)"
-  #     commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'
-
-  # --- New Destroy Option Added Below ---
   - task: TerraformTaskV4@4
-    displayName: "Terraform Destroy"
-    env:
-      VAULT_ADDR: "http://$(vault-ip):8200"
-      VAULT_TOKEN: "$(vault-token)"
+    displayName: "Terraform Plan"
     inputs:
       provider: "aws"
-      command: "destroy"
+      command: "plan"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
+      environmentServiceNameAWS: "$(aws_service_connection)"
+      commandOptions: '-var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'
+
+  - task: TerraformTaskV4@4
+    displayName: "Terraform ${{ parameters.action }}"
+    inputs:
+      provider: "aws"
+      command: "${{ parameters.action }}"
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: '-auto-approve -var="vault_addr=http://$(vault-ip):8200" -var="vault_token=$(vault-token)"'

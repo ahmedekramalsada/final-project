@@ -10,15 +10,16 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  # Make sure these are defined in a Variable Group or Secret variables
+  # Service Connections — configure these in Azure DevOps Project Settings
   nexus_service_connection: "nexus-connection"
-  nexus_repository_name: "final-project-repo"
-  nexus_url: "your-nexus-url.com" # ADD THIS VARIABLE
-  image_tag: "$(Build.BuildId)"
   sonarqube_connection: "SonarQube-Connection"
+  # Docker/Nexus config
+  nexus_repository_name: "final-project-repo"
+  nexus_url: "$(NEXUS_URL)" # Set this in a Variable Group or pipeline variable
+  image_tag: "$(Build.BuildId)"
 
 steps:
-  # FIX: Use @6 instead of @5 if @5 is not found
+  # --- Step 1: Code Quality with SonarQube ---
   - task: SonarQubePrepare@6
     displayName: "Prepare SonarQube Analysis"
     inputs:
@@ -27,7 +28,7 @@ steps:
       configMode: "manual"
       cliProjectKey: "final-project-app"
       cliProjectName: "Final Project App"
-      cliSources: "final-project-nti"
+      cliSources: "final-project-nti/app"
 
   - task: SonarQubeAnalyze@6
     displayName: "Run SonarQube Analysis"
@@ -37,6 +38,7 @@ steps:
     inputs:
       pollingTimeoutSec: "300"
 
+  # --- Step 2: Build & Push Docker Image to Nexus ---
   - task: Docker@2
     displayName: "Build and Push Docker Image to Nexus"
     inputs:
@@ -44,34 +46,48 @@ steps:
       repository: "$(nexus_repository_name)"
       command: "buildAndPush"
       Dockerfile: "final-project-nti/app/Dockerfile"
-      buildContext: "final-project-nti/app" # Explicit context is safer
+      buildContext: "final-project-nti/app"
       tags: |
         $(image_tag)
         latest
 
+  # --- Step 3: Security Scan with Trivy ---
   - script: |
-      # 1. Install Trivy
+      # Install Trivy
       sudo apt-get install wget apt-transport-https gnupg lsb-release -y
       wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
       echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
       sudo apt-get update
       sudo apt-get install trivy -y
 
-      # 2. Run Trivy Scan (Note the TRIVY_ specific env vars)
+      # Run Trivy Scan
       export TRIVY_USERNAME=$(NEXUS_USERNAME)
       export TRIVY_PASSWORD=$(NEXUS_PASSWORD)
 
       trivy image --exit-code 0 --severity MEDIUM,HIGH,CRITICAL $(nexus_url)/$(nexus_repository_name):$(image_tag)
     displayName: "Trivy Container Image Scan"
 
+  # --- Step 4: Update K8s Manifest with new image tag ---
+  - script: |
+      echo "Updating k8s deployment with new tag $(image_tag)..."
+      sed -i "s|image: .*|image: $(nexus_url)/$(nexus_repository_name):$(image_tag)|g" final-project-nti/k8s/deployment.yaml
+    displayName: "Update K8s Manifest Image Tag"
+
+  # --- Step 5: Commit and Push Manifest Change (for ArgoCD to pick up) ---
+  - script: |
+      cd final-project-nti
+      git config user.email "pipeline@azuredevops.com"
+      git config user.name "Azure Pipeline"
+      git add k8s/deployment.yaml
+      git commit -m "ci: update image tag to $(image_tag) [skip ci]"
+      git push origin HEAD:main
+    displayName: "Push Updated Manifest for ArgoCD"
+    env:
+      GIT_TOKEN: $(GIT_TOKEN)
+
+  # --- Step 6: Publish K8s manifests as build artifact ---
   - task: PublishBuildArtifacts@1
-    displayName: "Publish Artifacts (Manifests)"
+    displayName: "Publish K8s Manifests"
     inputs:
       PathtoPublish: "final-project-nti/k8s"
       ArtifactName: "manifests"
-
-  - script: |
-      echo "Updating k8s deployment with new tag $(image_tag)..."
-      # Using a different separator '|' in sed because the URL contains '/'
-      sed -i "s|image: .*|image: $(nexus_url)/$(nexus_repository_name):$(image_tag)|g" final-project-nti/k8s/deployment.yaml
-    displayName: "Update Manifests (Placeholder)"

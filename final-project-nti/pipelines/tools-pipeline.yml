@@ -17,12 +17,21 @@ variables:
   - name: aws_service_connection
     value: "terraform"
 
+parameters:
+  - name: action
+    displayName: "Terraform Action"
+    type: string
+    default: "apply"
+    values:
+      - apply
+      - destroy
+
 steps:
   - task: TerraformInstaller@1
     inputs:
       terraformVersion: "latest"
 
-  # 1. Terraform Tools Deployment
+  # 1. Terraform Init
   - task: TerraformTaskV4@4
     displayName: "Terraform Init"
     inputs:
@@ -34,11 +43,12 @@ steps:
       backendAWSKey: "$(terraform_backend_key)"
       backendAWSRegion: "$(terraform_region)"
 
+  # 2. Terraform Apply or Destroy (based on parameter)
   - task: TerraformTaskV4@4
-    displayName: "Terraform Plan & Apply"
+    displayName: "Terraform ${{ parameters.action }}"
     inputs:
       provider: "aws"
-      command: "apply" # Use apply with auto-approve for automation
+      command: "${{ parameters.action }}"
       workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
       environmentServiceNameAWS: "$(aws_service_connection)"
       commandOptions: >
