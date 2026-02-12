@@ -16,49 +16,34 @@ stages:
   - stage: DestroyTools
     displayName: "Destroy Tools & Services"
     jobs:
-      - job: DestroyToolsJob
+      # --- CLEANUP HANDLED INSIDE TERRAFORM (tooling.tf) ---
+      - task: TerraformInstaller@1
+        inputs:
+          terraformVersion: "latest"
+
+      - task: TerraformTaskV4@4
+        displayName: "Terraform Init (Tools)"
+        inputs:
+          provider: "aws"
+          command: "init"
+          workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+          backendServiceAWS: "$(aws_service_connection)"
+          backendAWSBucketName: "$(terraform_backend_bucket)"
+          backendAWSKey: "tools/terraform.tfstate"
+          backendAWSRegion: "$(terraform_region)"
+
+      - task: TerraformTaskV4@4
         displayName: "Terraform Destroy (Tools)"
-        steps:
-          # --- ADDED CLEANUP STEP ---
-          - task: AWSShellScript@1
-            displayName: "Pre-Destroy K8s Cleanup"
-            inputs:
-              awsCredentials: "$(aws_service_connection)"
-              regionName: "$(terraform_region)"
-              scriptType: "inline"
-              inlineScript: |
-                export CLUSTER_NAME="devops-cluster" # Monitor if this needs to be dynamic
-                chmod +x $(System.DefaultWorkingDirectory)/final-project-nti/scripts/cleanup.sh
-                $(System.DefaultWorkingDirectory)/final-project-nti/scripts/cleanup.sh
-              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
-
-          - task: TerraformInstaller@1
-            inputs:
-              terraformVersion: "latest"
-
-          - task: TerraformTaskV4@4
-            displayName: "Terraform Init (Tools)"
-            inputs:
-              provider: "aws"
-              command: "init"
-              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
-              backendServiceAWS: "$(aws_service_connection)"
-              backendAWSBucketName: "$(terraform_backend_bucket)"
-              backendAWSKey: "tools/terraform.tfstate"
-              backendAWSRegion: "$(terraform_region)"
-
-          - task: TerraformTaskV4@4
-            displayName: "Terraform Destroy (Tools)"
-            inputs:
-              provider: "aws"
-              command: "destroy"
-              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
-              environmentServiceNameAWS: "$(aws_service_connection)"
-              commandOptions: >
-                -auto-approve 
-                -var="vault_addr=http://$(vault-ip):8200" 
-                -var="vault_token=$(vault-token)" 
-                -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
+        inputs:
+          provider: "aws"
+          command: "destroy"
+          workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+          environmentServiceNameAWS: "$(aws_service_connection)"
+          commandOptions: >
+            -auto-approve 
+            -var="vault_addr=http://$(vault-ip):8200" 
+            -var="vault_token=$(vault-token)" 
+            -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
 
   - stage: DestroyInfrastructure
     displayName: "Destroy Infrastructure"

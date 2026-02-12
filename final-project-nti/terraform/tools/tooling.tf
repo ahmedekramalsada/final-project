@@ -24,7 +24,10 @@ resource "helm_release" "nginx" {
     value = "true"
   }
 
-  depends_on = [helm_release.aws_load_balancer_controller]
+  depends_on = [
+    helm_release.aws_load_balancer_controller,
+    null_resource.lb_cleanup_guard
+  ]
 }
 
 # ArgoCD for GitOps-based continuous deployment
@@ -62,7 +65,10 @@ resource "helm_release" "argocd" {
     value = "/argocd"
   }
 
-  depends_on = [helm_release.aws_load_balancer_controller]
+  depends_on = [
+    helm_release.aws_load_balancer_controller,
+    null_resource.lb_cleanup_guard
+  ]
 }
 
 
@@ -104,7 +110,10 @@ resource "helm_release" "sonarqube" {
     value = "2Gi"
   }
 
-  depends_on = [helm_release.aws_load_balancer_controller]
+  depends_on = [
+    helm_release.aws_load_balancer_controller,
+    null_resource.lb_cleanup_guard
+  ]
 }
 
 
@@ -226,5 +235,8 @@ resource "helm_release" "datadog" {
     value = "true"
   }
 
-  depends_on = [helm_release.aws_load_balancer_controller]
+  depends_on = [
+    helm_release.aws_load_balancer_controller,
+    null_resource.lb_cleanup_guard
+  ]
 }
