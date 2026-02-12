@@ -1,0 +1,83 @@
+trigger: none
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - group: "vault token and ip"
+  - name: terraform_backend_bucket
+    value: "backend-s3-final-project"
+  - name: terraform_region
+    value: "us-east-1"
+  - name: aws_service_connection
+    value: "terraform"
+
+stages:
+  - stage: DestroyTools
+    displayName: "Destroy Tools & Services"
+    jobs:
+      - job: DestroyToolsJob
+        displayName: "Terraform Destroy (Tools)"
+        steps:
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: "latest"
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Init (Tools)"
+            inputs:
+              provider: "aws"
+              command: "init"
+              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+              backendServiceAWS: "$(aws_service_connection)"
+              backendAWSBucketName: "$(terraform_backend_bucket)"
+              backendAWSKey: "tools/terraform.tfstate"
+              backendAWSRegion: "$(terraform_region)"
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Destroy (Tools)"
+            inputs:
+              provider: "aws"
+              command: "destroy"
+              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+              environmentServiceNameAWS: "$(aws_service_connection)"
+              commandOptions: >
+                -auto-approve 
+                -var="vault_addr=http://$(vault-ip):8200" 
+                -var="vault_token=$(vault-token)" 
+                -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
+
+  - stage: DestroyInfrastructure
+    displayName: "Destroy Infrastructure"
+    dependsOn: DestroyTools
+    condition: succeeded()
+    jobs:
+      - job: DestroyInfraJob
+        displayName: "Terraform Destroy (Infra)"
+        steps:
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: "latest"
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Init (Infra)"
+            inputs:
+              provider: "aws"
+              command: "init"
+              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
+              backendServiceAWS: "$(aws_service_connection)"
+              backendAWSBucketName: "$(terraform_backend_bucket)"
+              backendAWSKey: "infra/terraform.tfstate"
+              backendAWSRegion: "$(terraform_region)"
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Destroy (Infra)"
+            inputs:
+              provider: "aws"
+              command: "destroy"
+              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/infrastructure"
+              environmentServiceNameAWS: "$(aws_service_connection)"
+              commandOptions: >
+                -auto-approve 
+                -var="vault_addr=http://$(vault-ip):8200" 
+                -var="vault_token=$(vault-token)"
