@@ -19,6 +19,19 @@ stages:
       - job: DestroyToolsJob
         displayName: "Terraform Destroy (Tools)"
         steps:
+          # --- ADDED CLEANUP STEP ---
+          - task: AWSShellScript@1
+            displayName: "Pre-Destroy K8s Cleanup"
+            inputs:
+              awsCredentials: "$(aws_service_connection)"
+              regionName: "$(terraform_region)"
+              scriptType: "inline"
+              inlineScript: |
+                export CLUSTER_NAME="devops-cluster" # Monitor if this needs to be dynamic
+                chmod +x $(System.DefaultWorkingDirectory)/final-project-nti/scripts/cleanup.sh
+                $(System.DefaultWorkingDirectory)/final-project-nti/scripts/cleanup.sh
+              workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti"
+
           - task: TerraformInstaller@1
             inputs:
               terraformVersion: "latest"
