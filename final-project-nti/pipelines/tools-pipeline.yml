@@ -43,7 +43,15 @@ steps:
       backendAWSKey: "$(terraform_backend_key)"
       backendAWSRegion: "$(terraform_region)"
 
-  # 2. Terraform Apply or Destroy (based on parameter)
+  # 2. Terraform Validate
+  - task: TerraformTaskV4@4
+    displayName: "Terraform Validate"
+    inputs:
+      provider: "aws"
+      command: "validate"
+      workingDirectory: "$(System.DefaultWorkingDirectory)/final-project-nti/terraform/tools"
+
+  # 3. Terraform Apply or Destroy (based on parameter)
   - task: TerraformTaskV4@4
     displayName: "Terraform ${{ parameters.action }}"
     inputs:
@@ -57,4 +65,4 @@ steps:
         -var="vault_token=$(vault-token)" 
         -var="azuredevops_agent_image=mcr.microsoft.com/azure-pipelines/vsts-agent:ubuntu-20.04"
 
-  # K8s manifests are now applied via Terraform 'local-exec' in k8s_manifests.tf
+  # K8s manifests are now applied via Terraform-native resources in k8s_manifests.tf

@@ -6,6 +6,8 @@ resource "helm_release" "keda" {
   namespace        = "keda"
   create_namespace = true
   version          = "2.13.0"
+  timeout          = 600
 
-  # Depends on EKS cluster readiness, which 'tools' pipeline assumes
+  # Ensure LB controller is ready before deploying KEDA
+  depends_on = [helm_release.aws_load_balancer_controller]
 }

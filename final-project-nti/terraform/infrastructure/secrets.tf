@@ -7,7 +7,8 @@ data "vault_kv_secret_v2" "app_secrets" {
 # Create Kubernetes Secret for MongoDB
 resource "kubernetes_secret" "mongodb_secret" {
   metadata {
-    name = "mongodb-secret"
+    name      = "mongodb-secret"
+    namespace = "default"
   }
 
   data = {
@@ -17,4 +18,9 @@ resource "kubernetes_secret" "mongodb_secret" {
   type = "Opaque"
 
   depends_on = [module.eks]
+
+  lifecycle {
+    ignore_changes = [metadata[0].annotations]
+  }
 }
+

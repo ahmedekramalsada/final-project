@@ -8,6 +8,7 @@ resource "helm_release" "nginx" {
   namespace        = "ingress-nginx"
   create_namespace = true
   version          = var.nginx_chart_version
+  timeout          = 600
 
   set {
     name  = "controller.service.enabled"
@@ -24,10 +25,8 @@ resource "helm_release" "nginx" {
     value = "true"
   }
 
-  depends_on = [
-    helm_release.aws_load_balancer_controller,
-    null_resource.lb_cleanup_guard
-  ]
+  # Destroyed BEFORE the LB controller (reverse dependency order)
+  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 # ArgoCD for GitOps-based continuous deployment
@@ -41,6 +40,7 @@ resource "helm_release" "argocd" {
   namespace        = "argocd"
   create_namespace = true
   version          = var.argocd_chart_version
+  timeout          = 600
 
   # ClusterIP only — routed through Ingress
   set {
@@ -65,10 +65,8 @@ resource "helm_release" "argocd" {
     value = "/argocd"
   }
 
-  depends_on = [
-    helm_release.aws_load_balancer_controller,
-    null_resource.lb_cleanup_guard
-  ]
+  # Destroyed BEFORE the LB controller (reverse dependency order)
+  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 
@@ -82,6 +80,7 @@ resource "helm_release" "sonarqube" {
   chart            = "sonarqube"
   namespace        = "tooling"
   create_namespace = true
+  timeout          = 600
 
   set {
     name  = "service.type"
@@ -110,10 +109,8 @@ resource "helm_release" "sonarqube" {
     value = "2Gi"
   }
 
-  depends_on = [
-    helm_release.aws_load_balancer_controller,
-    null_resource.lb_cleanup_guard
-  ]
+  # Destroyed BEFORE the LB controller (reverse dependency order)
+  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 
@@ -158,6 +155,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
+  timeout    = 600
 
   set {
     name  = "clusterName"
@@ -199,6 +197,7 @@ resource "helm_release" "datadog" {
   version          = "3.19.1"
   namespace        = "datadog"
   create_namespace = true
+  timeout          = 600
 
   set {
     name  = "datadog.apiKey"
@@ -235,8 +234,6 @@ resource "helm_release" "datadog" {
     value = "true"
   }
 
-  depends_on = [
-    helm_release.aws_load_balancer_controller,
-    null_resource.lb_cleanup_guard
-  ]
+  # Destroyed BEFORE the LB controller (reverse dependency order)
+  depends_on = [helm_release.aws_load_balancer_controller]
 }
