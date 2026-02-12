@@ -19,7 +19,6 @@ resource "helm_release" "nginx" {
     value = "NodePort"
   }
 
-
   set {
     name  = "controller.metrics.enabled"
     value = "true"
@@ -54,15 +53,14 @@ resource "helm_release" "argocd" {
     value = "internet-facing"
   }
 
-
   depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 
-
-
 # --- SonarQube (Code Quality Scanner) ---
 resource "helm_release" "sonarqube" {
+  count = var.enable_sonarqube ? 1 : 0
+
   name             = "sonarqube"
   repository       = "https://sonarsource.github.io/helm-chart-sonarqube"
   chart            = "sonarqube"
@@ -89,10 +87,9 @@ resource "helm_release" "sonarqube" {
     name  = "resources.requests.memory"
     value = "2Gi"
   }
+
+  depends_on = [helm_release.aws_load_balancer_controller]
 }
-
-
-
 
 
 # --- AWS Load Balancer Controller (Required for NLB) ---
@@ -156,9 +153,9 @@ resource "helm_release" "aws_load_balancer_controller" {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = aws_iam_role.lb_controller.arn
   }
+
+  depends_on = [aws_iam_role_policy_attachment.lb_controller_attach]
 }
-
-
 
 
 # --- Datadog Agent ---
@@ -212,4 +209,6 @@ resource "helm_release" "datadog" {
     name  = "datadog.kubeStateMetricsEnabled"
     value = "true"
   }
+
+  depends_on = [helm_release.aws_load_balancer_controller]
 }

@@ -50,6 +50,12 @@ variable "enable_datadog" {
   default     = true
 }
 
+variable "enable_sonarqube" {
+  description = "Enable SonarQube deployment"
+  type        = bool
+  default     = true
+}
+
 #------------------------------------------------------------------------------
 # Azure DevOps Configuration
 #------------------------------------------------------------------------------

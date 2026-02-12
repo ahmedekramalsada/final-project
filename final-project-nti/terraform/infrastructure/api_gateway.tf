@@ -28,10 +28,12 @@ resource "aws_apigatewayv2_integration" "eks_ingress" {
 
 resource "aws_apigatewayv2_vpc_link" "eks" {
   name               = "${var.project}-vpc-link"
-  security_group_ids = []
+  security_group_ids = [module.eks.cluster_security_group_id]
   subnet_ids         = module.vpc.private_subnets
 
   tags = local.common_tags
+
+  depends_on = [module.vpc, module.eks]
 }
 
 
@@ -87,4 +89,3 @@ resource "aws_apigatewayv2_route" "default" {
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
-

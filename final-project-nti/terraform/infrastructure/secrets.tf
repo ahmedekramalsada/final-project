@@ -15,4 +15,6 @@ resource "kubernetes_secret" "mongodb_secret" {
   }
 
   type = "Opaque"
+
+  depends_on = [module.eks]
 }

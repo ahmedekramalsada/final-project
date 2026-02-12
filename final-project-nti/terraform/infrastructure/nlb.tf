@@ -7,6 +7,8 @@ resource "aws_lb" "ingress_nlb" {
   enable_deletion_protection = false
 
   tags = local.common_tags
+
+  depends_on = [module.vpc]
 }
 
 resource "aws_lb_target_group" "ingress_nginx" {
@@ -20,13 +22,15 @@ resource "aws_lb_target_group" "ingress_nginx" {
     enabled             = true
     interval            = 30
     path                = "/healthz"
-    port                = "traffic-port"
+    port                = "80"
     protocol            = "HTTP"
     healthy_threshold   = 3
     unhealthy_threshold = 3
   }
 
   tags = local.common_tags
+
+  depends_on = [module.vpc]
 }
 
 resource "aws_lb_listener" "ingress_80" {
