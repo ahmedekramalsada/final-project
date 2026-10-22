@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: nexus
+    ports:
+      - "8081:8081"
+    volumes:
+      - nexus_data:/nexus-data
+    restart: always
+
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    ports:
+      - "8200:8200"
+    environment:
+      # Embed configuration directly in the environment variable
+      VAULT_LOCAL_CONFIG: |
+        {
+          "storage": {
+            "file": {
+              "path": "/vault/file"
+            }
+          },
+          "listener": {
+            "tcp": {
+              "address": "0.0.0.0:8200",
+              "tls_disable": 1
+            }
+          },
+          "ui": true,
+          "api_addr": "http://0.0.0.0:8200"
+        }
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/file
+    command: server
+    restart: always
+
+# Named volumes are managed by Docker and persist until explicitly removed
+volumes:
+  nexus_data:
+  vault_data:
